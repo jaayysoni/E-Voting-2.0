@@ -12,13 +12,13 @@
 <div class="flex min-h-screen">
 
   <!-- Sidebar -->
-  <aside class="w-64 bg-white border-r min-h-screen p-6">
+  <aside class="w-64 bg-white border-r min-h-screen p-6 relative">
     <h1 class="text-xl font-bold text-green-600 mb-6">Election Commissioner</h1>
     <nav class="space-y-3">
       <a href="#" class="block p-2 rounded hover:bg-gray-100">Dashboard</a>
-      <a href="#" class="block p-2 rounded hover:bg-gray-100">Election Monitoring</a>
-      <a href="#" class="block p-2 rounded hover:bg-gray-100">Audit & Verification</a>
-      <a href="#" class="block p-2 rounded hover:bg-gray-100">Reports</a>
+      <a href="#election-section" class="block p-2 rounded hover:bg-gray-100">Election</a>
+      <a href="#voters-section" class="block p-2 rounded hover:bg-gray-100">Voter Management</a>
+      <a href="#candidates-section" class="block p-2 rounded hover:bg-gray-100">Candidates</a>
     </nav>
     <div class="absolute bottom-6">
       <a href="#" class="text-red-500 flex items-center"><span class="material-icons mr-2">logout</span>Logout</a>
@@ -26,13 +26,13 @@
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 p-6">
+  <main class="flex-1 p-6 space-y-6">
 
     <!-- Dashboard Overview -->
-    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded shadow">
-        <p class="text-gray-500">Total Elections</p>
-        <h3 class="text-2xl font-bold">{{ total_elections }}</h3>
+        <p class="text-gray-500">Election Name</p>
+        <h3 class="text-2xl font-bold">{{ election.name if election else 'Not Created' }}</h3>
       </div>
       <div class="bg-white p-4 rounded shadow">
         <p class="text-gray-500">Registered Voters</p>
@@ -43,45 +43,80 @@
         <h3 class="text-2xl font-bold">{{ votes_cast }}</h3>
       </div>
       <div class="bg-white p-4 rounded shadow">
-        <p class="text-gray-500">Active Elections</p>
-        <h3 class="text-2xl font-bold">{{ active_elections_count }}</h3>
+        <p class="text-gray-500">Status</p>
+        <h3 class="text-2xl font-bold">
+          {% if election %}
+            {{ election.status }}
+          {% else %}
+            Not Created
+          {% endif %}
+        </h3>
       </div>
     </section>
 
-    <!-- Election Monitoring -->
-    <section class="mb-6">
-      <h2 class="text-xl font-bold mb-4">Election Monitoring</h2>
+    <!-- Election Section -->
+    <section id="election-section">
+      <h2 class="text-xl font-bold mb-4">Election</h2>
+      {% if not election %}
+      <div class="bg-white p-4 rounded shadow">
+        <form method="POST" action="/create-election" class="space-y-4">
+          <div>
+            <label class="block text-gray-700">Election Name</label>
+            <input type="text" name="name" required class="w-full border p-2 rounded"/>
+          </div>
+          <div>
+            <label class="block text-gray-700">Start Date & Time</label>
+            <input type="datetime-local" name="start_date" required class="w-full border p-2 rounded"/>
+          </div>
+          <div>
+            <label class="block text-gray-700">End Date & Time</label>
+            <input type="datetime-local" name="end_date" required class="w-full border p-2 rounded"/>
+          </div>
+          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:opacity-90">Create Election</button>
+        </form>
+      </div>
+      {% else %}
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-700">Election is already created.</p>
+        <p class="mt-2"><strong>Election Name:</strong> {{ election.name }}</p>
+        <p><strong>Start:</strong> {{ election.start_date }}</p>
+        <p><strong>End:</strong> {{ election.end_date }}</p>
+        {% if election.status == 'Ended' %}
+          <p><strong>Winner:</strong> {{ election.winner }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </section>
 
-      <div class="bg-white rounded shadow overflow-x-auto">
+    <!-- Voter Management -->
+    <section id="voters-section">
+      <h2 class="text-xl font-bold mb-4">Voter Management</h2>
+      <div class="bg-white p-4 rounded shadow mb-4">
+        <form method="POST" action="/add-voter" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <input type="text" name="name" placeholder="Voter Name" required class="border p-2 rounded"/>
+          <input type="email" name="email" placeholder="Voter Email" required class="border p-2 rounded"/>
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:opacity-90">Add Voter</button>
+        </form>
+      </div>
+
+      <div class="bg-white p-4 rounded shadow overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead class="bg-gray-50">
             <tr>
-              <th class="px-4 py-2 border-b">Election Name</th>
-              <th class="px-4 py-2 border-b">Start Date</th>
-              <th class="px-4 py-2 border-b">End Date</th>
-              <th class="px-4 py-2 border-b">Status</th>
-              <th class="px-4 py-2 border-b">Votes Cast</th>
+              <th class="px-4 py-2 border-b">Voter Name</th>
+              <th class="px-4 py-2 border-b">Email</th>
               <th class="px-4 py-2 border-b">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {% for election in elections %}
+            {% for voter in voters %}
             <tr>
-              <td class="px-4 py-2 border-b">{{ election.name }}</td>
-              <td class="px-4 py-2 border-b">{{ election.start_date }}</td>
-              <td class="px-4 py-2 border-b">{{ election.end_date }}</td>
+              <td class="px-4 py-2 border-b">{{ voter.name }}</td>
+              <td class="px-4 py-2 border-b">{{ voter.email }}</td>
               <td class="px-4 py-2 border-b">
-                {% if election.status == 'Active' %}
-                  <span class="text-green-600 font-semibold">Active</span>
-                {% elif election.status == 'Ended' %}
-                  <span class="text-gray-500 font-semibold">Ended</span>
-                {% else %}
-                  <span class="text-yellow-500 font-semibold">{{ election.status }}</span>
-                {% endif %}
-              </td>
-              <td class="px-4 py-2 border-b">{{ election.votes_cast }}</td>
-              <td class="px-4 py-2 border-b">
-                <button class="bg-blue-500 text-white px-2 py-1 rounded text-sm">View Details</button>
+                <form method="POST" action="/remove-voter/{{ voter.id }}">
+                  <button type="submit" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Remove</button>
+                </form>
               </td>
             </tr>
             {% endfor %}
@@ -90,27 +125,46 @@
       </div>
     </section>
 
-    <!-- Audit & Verification -->
-    <section class="mb-6">
-      <h2 class="text-xl font-bold mb-4">Audit & Verification</h2>
-
+    <!-- Candidate Management -->
+    <section id="candidates-section">
+      <h2 class="text-xl font-bold mb-4">Candidate Management</h2>
       <div class="bg-white p-4 rounded shadow mb-4">
-        <p class="text-gray-700">Verify encryption integrity and vote logs for selected election.</p>
-        <button class="bg-green-500 text-white px-4 py-2 rounded mt-2 hover:opacity-90">Verify Election</button>
+        <form method="POST" action="/add-candidate" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <input type="text" name="name" placeholder="Candidate Name" required class="border p-2 rounded"/>
+          <input type="text" name="party" placeholder="Party Name" required class="border p-2 rounded"/>
+          <input type="text" name="moto" placeholder="Moto / Slogan" class="border p-2 rounded"/>
+          <input type="file" name="profile_pic" class="border p-2 rounded"/>
+          <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:opacity-90 col-span-full md:col-span-1">Add Candidate</button>
+        </form>
       </div>
 
-      <div class="bg-white p-4 rounded shadow">
-        <p class="text-gray-700">Download voter turnout and token report (aggregated)</p>
-        <button class="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:opacity-90">Download Report</button>
-      </div>
-    </section>
-
-    <!-- Reports Section -->
-    <section>
-      <h2 class="text-xl font-bold mb-2">Reports</h2>
-      <div class="bg-white p-4 rounded shadow flex justify-between items-center">
-        <p class="text-gray-700">Export election statistics for audit</p>
-        <button class="bg-green-500 text-white px-4 py-2 rounded hover:opacity-90">Export CSV / PDF</button>
+      <div class="bg-white p-4 rounded shadow overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 border-b">Name</th>
+              <th class="px-4 py-2 border-b">Party</th>
+              <th class="px-4 py-2 border-b">Moto</th>
+              <th class="px-4 py-2 border-b">Profile Picture</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for candidate in candidates %}
+            <tr>
+              <td class="px-4 py-2 border-b">{{ candidate.name }}</td>
+              <td class="px-4 py-2 border-b">{{ candidate.party }}</td>
+              <td class="px-4 py-2 border-b">{{ candidate.moto }}</td>
+              <td class="px-4 py-2 border-b">
+                {% if candidate.profile_pic %}
+                  <img src="{{ candidate.profile_pic }}" alt="Profile" class="h-10 w-10 rounded-full"/>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </section>
 
