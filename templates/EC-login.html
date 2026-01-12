@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Voting 2.0 | EC Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+  <div class="min-h-screen flex items-center justify-center px-4">
+
+    <!-- EC Login Card -->
+    <div class="bg-white w-full max-w-md rounded-xl shadow-md p-8">
+
+      <!-- Header -->
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-green-600">
+          EC Panel <span class="text-gray-400 text-sm">v2.0</span>
+        </h1>
+        <p class="text-gray-500 mt-2">Manage your elections securely</p>
+      </div>
+
+      <!-- Manual Login Form -->
+      <form id="ec-login-form" class="space-y-4" method="POST" action="{{ url_for('ec_login_post') }}">
+
+        <!-- EC Email -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your EC email"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+            required
+            value="{{ email or '' }}"
+          />
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Password
+          </label>
+          <input
+            type="password"
+            name="password"
+            placeholder="Enter your password"
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+            required
+          />
+        </div>
+
+        <!-- Login Options -->
+        <div class="flex justify-between items-center">
+          <div>
+            <label class="inline-flex items-center">
+              <input type="radio" class="form-radio text-green-500" name="ec_action" value="login" {% if ec_action == 'login' or not ec_action %}checked{% endif %}>
+              <span class="ml-2 text-gray-600 text-sm">Login to your election</span>
+            </label>
+          </div>
+          <div>
+            <label class="inline-flex items-center">
+              <input type="radio" class="form-radio text-blue-500" name="ec_action" value="create" {% if ec_action == 'create' %}checked{% endif %}>
+              <span class="ml-2 text-gray-600 text-sm">Create new election</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Login Button -->
+        <button
+          type="submit"
+          class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition"
+        >
+          Continue
+        </button>
+
+      </form>
+
+      <!-- Divider -->
+      <div class="flex items-center my-6">
+        <div class="flex-1 border-t"></div>
+        <span class="px-3 text-sm text-gray-400">OR</span>
+        <div class="flex-1 border-t"></div>
+      </div>
+
+      <!-- Google OAuth -->
+      <a href="{{ url_for('google_oauth_login') }}"
+         class="w-full flex items-center justify-center gap-3 border py-2 rounded-lg hover:bg-gray-50 transition"
+      >
+        <img
+          src="https://www.svgrepo.com/show/475656/google-color.svg"
+          alt="Google"
+          class="w-5 h-5"
+        />
+        <span class="text-gray-700 font-medium">
+          Continue with Google
+        </span>
+      </a>
+
+      <!-- Footer -->
+      <p class="text-center text-xs text-gray-400 mt-6">
+        © 2026 E-Voting System. All rights reserved.
+      </p>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

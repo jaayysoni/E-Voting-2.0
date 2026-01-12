@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Voting 2.0 | Vote Recorded</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+  <main class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- ================= Thank You Card ================= -->
+    <section class="bg-white w-full max-w-lg rounded-xl shadow-md p-8 text-center">
+
+      <!-- Header -->
+      <h1 class="text-2xl font-bold text-green-600 mb-4">
+        Thank You, Your Vote Has Been Recorded!
+      </h1>
+      <p class="text-gray-600 mb-6">
+        Your vote is completely secure and encrypted.
+      </p>
+
+      <!-- Voter Details -->
+      <div class="bg-gray-50 p-4 rounded-lg mb-6 text-left">
+        <p class="text-gray-700"><strong>Voter Name:</strong> {{ voter.name }}</p>
+        <p class="text-gray-700"><strong>Voter ID:</strong> {{ voter.id }}</p>
+        <p class="text-gray-700"><strong>Election:</strong> {{ election.name }}</p>
+        <p class="text-gray-700"><strong>Date & Time:</strong> {{ vote_datetime }}</p>
+      </div>
+
+      <!-- Token Section -->
+      <div class="bg-gray-100 p-4 rounded-lg mb-6">
+        <p class="text-gray-700 mb-2">Your unique vote token:</p>
+        <p class="text-green-600 font-mono text-lg break-all">{{ vote_token }}</p>
+      </div>
+
+      <!-- Instructions -->
+      <div class="bg-yellow-50 p-4 rounded-lg text-left text-sm text-gray-700 mb-6">
+        <ul class="list-disc list-inside space-y-1">
+          <li>Take a screenshot of this page for your records in case of any dispute.</li>
+          <li>Your vote is totally encrypted and cannot be modified.</li>
+          <li>The token above can be used to verify your vote in the official system.</li>
+          <li>Please keep this token secure and private.</li>
+        </ul>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-center gap-4">
+        <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition">
+          Print / Screenshot
+        </button>
+        <button onclick="window.location.href='/'" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition">
+          Back to Home
+        </button>
+      </div>
+
+    </section>
+
+  </main>
+
+</body>
+</html>

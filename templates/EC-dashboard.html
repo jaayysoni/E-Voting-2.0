@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Voting 2.0 | Election Commissioner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+<div class="flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white border-r min-h-screen p-6">
+    <h1 class="text-xl font-bold text-green-600 mb-6">Election Commissioner</h1>
+    <nav class="space-y-3">
+      <a href="#" class="block p-2 rounded hover:bg-gray-100">Dashboard</a>
+      <a href="#" class="block p-2 rounded hover:bg-gray-100">Election Monitoring</a>
+      <a href="#" class="block p-2 rounded hover:bg-gray-100">Audit & Verification</a>
+      <a href="#" class="block p-2 rounded hover:bg-gray-100">Reports</a>
+    </nav>
+    <div class="absolute bottom-6">
+      <a href="#" class="text-red-500 flex items-center"><span class="material-icons mr-2">logout</span>Logout</a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6">
+
+    <!-- Dashboard Overview -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-500">Total Elections</p>
+        <h3 class="text-2xl font-bold">{{ total_elections }}</h3>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-500">Registered Voters</p>
+        <h3 class="text-2xl font-bold">{{ total_voters }}</h3>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-500">Votes Cast</p>
+        <h3 class="text-2xl font-bold">{{ votes_cast }}</h3>
+      </div>
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-500">Active Elections</p>
+        <h3 class="text-2xl font-bold">{{ active_elections_count }}</h3>
+      </div>
+    </section>
+
+    <!-- Election Monitoring -->
+    <section class="mb-6">
+      <h2 class="text-xl font-bold mb-4">Election Monitoring</h2>
+
+      <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-2 border-b">Election Name</th>
+              <th class="px-4 py-2 border-b">Start Date</th>
+              <th class="px-4 py-2 border-b">End Date</th>
+              <th class="px-4 py-2 border-b">Status</th>
+              <th class="px-4 py-2 border-b">Votes Cast</th>
+              <th class="px-4 py-2 border-b">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for election in elections %}
+            <tr>
+              <td class="px-4 py-2 border-b">{{ election.name }}</td>
+              <td class="px-4 py-2 border-b">{{ election.start_date }}</td>
+              <td class="px-4 py-2 border-b">{{ election.end_date }}</td>
+              <td class="px-4 py-2 border-b">
+                {% if election.status == 'Active' %}
+                  <span class="text-green-600 font-semibold">Active</span>
+                {% elif election.status == 'Ended' %}
+                  <span class="text-gray-500 font-semibold">Ended</span>
+                {% else %}
+                  <span class="text-yellow-500 font-semibold">{{ election.status }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2 border-b">{{ election.votes_cast }}</td>
+              <td class="px-4 py-2 border-b">
+                <button class="bg-blue-500 text-white px-2 py-1 rounded text-sm">View Details</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Audit & Verification -->
+    <section class="mb-6">
+      <h2 class="text-xl font-bold mb-4">Audit & Verification</h2>
+
+      <div class="bg-white p-4 rounded shadow mb-4">
+        <p class="text-gray-700">Verify encryption integrity and vote logs for selected election.</p>
+        <button class="bg-green-500 text-white px-4 py-2 rounded mt-2 hover:opacity-90">Verify Election</button>
+      </div>
+
+      <div class="bg-white p-4 rounded shadow">
+        <p class="text-gray-700">Download voter turnout and token report (aggregated)</p>
+        <button class="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:opacity-90">Download Report</button>
+      </div>
+    </section>
+
+    <!-- Reports Section -->
+    <section>
+      <h2 class="text-xl font-bold mb-2">Reports</h2>
+      <div class="bg-white p-4 rounded shadow flex justify-between items-center">
+        <p class="text-gray-700">Export election statistics for audit</p>
+        <button class="bg-green-500 text-white px-4 py-2 rounded hover:opacity-90">Export CSV / PDF</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

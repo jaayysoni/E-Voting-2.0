@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>E-Voting 2.0 | Election Results</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<main class="min-h-screen flex flex-col items-center p-4">
+
+  <!-- ================= Celebration Canvas ================= -->
+  <canvas id="confettiCanvas" class="fixed top-0 left-0 w-full h-full pointer-events-none"></canvas>
+
+  <!-- ================= Results Header ================= -->
+  <section class="w-full max-w-4xl bg-white rounded-xl shadow-md p-6 text-center mb-6">
+      <h1 class="text-3xl font-bold text-green-600 mb-2">Election Results</h1>
+      <p class="text-gray-600 mb-1">{{ election.name }}</p>
+      <p class="text-gray-500 text-sm mb-2">Results declared on {{ election.result_date }}</p>
+    
+      <!-- Total Votes -->
+      <p class="text-gray-700 font-semibold text-lg">Total Votes Cast: {{ election.total_votes }}</p>
+  </section>
+
+  <!-- ================= Candidates Results Section ================= -->
+  <section class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    {% for candidate in candidates %}
+      <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center
+                  {% if loop.first %} border-4 border-green-400 relative {% else %} border-2 border-gray-300 {% endif %}">
+        
+        {% if loop.first %}
+          <div class="absolute top-0 -mt-6 bg-yellow-400 text-white px-4 py-1 rounded-full font-bold shadow-lg">
+            Winner 🏆
+          </div>
+        {% endif %}
+
+        <img src="{{ candidate.image_url }}" alt="{{ candidate.name }}" 
+             class="{% if loop.first %} w-32 h-32 {% else %} w-24 h-24 {% endif %} rounded-full mb-3">
+        <h2 class="text-xl font-bold">{{ candidate.name }}</h2>
+        <p class="text-gray-500 text-sm mb-2">Party: {{ candidate.party_name }}</p>
+        <img src="{{ candidate.party_symbol_url }}" alt="Party Symbol" 
+             class="{% if loop.first %} w-10 h-10 {% else %} w-8 h-8 {% endif %} mb-2">
+        <p class="text-gray-700 font-semibold">Votes: {{ candidate.votes }}</p>
+        <p class="{% if loop.first %} text-green-600 {% elif loop.index == 2 %} text-blue-500 {% else %} text-red-500 {% endif %} font-semibold">
+          Percentage: {{ candidate.percentage }}%
+        </p>
+      </div>
+    {% endfor %}
+
+  </section>
+
+</main>
+
+<!-- ================= Confetti Animation ================= -->
+<script>
+  const confettiCanvas = document.getElementById('confettiCanvas');
+  const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
+
+  // Fire confetti
+  myConfetti({
+    particleCount: 150,
+    spread: 70,
+    origin: { y: 0.6 }
+  });
+
+  // Optionally, repeat for more celebration
+  setInterval(() => {
+    myConfetti({
+      particleCount: 50,
+      spread: 50,
+      origin: { y: 0.6 }
+    });
+  }, 2000);
+</script>
+
+</body>
+</html>
