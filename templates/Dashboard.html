@@ -14,26 +14,13 @@
     <section>
       <aside class="w-64 bg-white min-h-screen border-r">
         <div class="p-6">
-          <h1 class="text-xl font-bold text-green-600 mb-6">
-            E-Voting <span class="text-gray-400 text-sm">v2.0</span>
-          </h1>
+          <h1 class="text-xl font-bold text-green-600 mb-6">E-Voting <span class="text-gray-400 text-sm">v2.0</span></h1>
           <nav class="space-y-3">
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100">
-              <span class="material-icons mr-2"></span>Organize an Election
-            </a>
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100">
-              <span class="material-icons mr-2"></span>View Election Result
-            </a>
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100">
-              <span class="material-icons mr-2"></span>View Voter List
-            </a>
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100">
-              <span class="material-icons mr-2"></span>View Candidate list
-            </a>
-            <a href="/login" class="flex items-center p-2 rounded hover:bg-gray-100">
-              <span class="material-icons mr-2"></span>
-              Login to vote
-            </a>
+            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>Organize an Election</a>
+            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>View Election Result</a>
+            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>View Voter List</a>
+            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>View Candidate list</a>
+            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>Login to vote</a>
           </nav>
         </div>
       </aside>
@@ -47,7 +34,7 @@
         <div class="flex justify-between items-center">
           <!-- Left: Greeting -->
           <div>
-            <h2 class="text-2xl font-bold text-gray-800">Welcome {{ user_name | default('-') }}</h2>
+            <h2 class="text-2xl font-bold text-gray-800">Welcome</h2>
           </div>
           <!-- Right: Search, Notifications, Avatar -->
           <div class="flex items-center space-x-4">
@@ -61,7 +48,7 @@
               <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             <div class="w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center font-semibold">
-              {{ user_initial | default('-') }}
+              -
             </div>
           </div>
         </div>
@@ -79,15 +66,15 @@
       <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-white p-4 rounded shadow">
           <p class="text-gray-500">Total Elections</p>
-          <h3 class="text-2xl font-bold">{{ total_elections }}</h3>
+          <h3 class="text-2xl font-bold">4</h3>
         </div>
         <div class="bg-white p-4 rounded shadow">
           <p class="text-gray-500">Votes Cast</p>
-          <h3 class="text-2xl font-bold">{{ votes_cast }}</h3>
+          <h3 class="text-2xl font-bold">2</h3>
         </div>
         <div class="bg-white p-4 rounded shadow">
           <p class="text-gray-500">Upcoming Elections</p>
-          <h3 class="text-2xl font-bold">{{ upcoming_elections }}</h3>
+          <h3 class="text-2xl font-bold">1</h3>
         </div>
       </section>
 
@@ -95,19 +82,37 @@
       <section class="mb-6">
         <h3 class="text-xl font-bold mb-3">Active Elections</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {% for election in active_elections %}
-          <div class="bg-white p-4 rounded shadow border-l-4 {% if election.status == 'active' %}border-green-400{% elif election.status == 'upcoming' %}border-yellow-400{% else %}border-gray-400{% endif %}">
-            <h4 class="font-bold">{{ election.title }}</h4>
-            <p class="text-gray-500 mb-2">{{ election.description }}</p>
-            <p class="text-gray-500 text-sm">Start: {{ election.start_date }} | End: {{ election.end_date }}</p>
-            <p class="text-{% if election.status == 'upcoming' %}yellow{% elif election.status == 'active' %}blue{% else %}gray{% endif %}-500 text-sm mb-2">
-              {% if election.status == 'active' %}Time remaining: {{ election.time_remaining }}{% elif election.status == 'upcoming' %}Upcoming{% else %}Election Ended{% endif %}
-            </p>
-            <button class="{% if election.status == 'active' %}bg-gradient-to-r from-blue-500 to-green-500 text-white{% else %}bg-gray-300 text-gray-500 cursor-not-allowed{% endif %} px-4 py-2 rounded mt-2 w-full">
-              {% if election.status == 'active' %}Vote Now{% elif election.status == 'upcoming' %}Coming Soon{% else %}Election Ended{% endif %}
-            </button>
+          <div class="bg-white p-4 rounded shadow border-l-4 border-green-400">
+            <h4 class="font-bold">Student Council President 2025</h4>
+            <p class="text-gray-500 mb-2">Vote for your next student council president to lead our campus community.</p>
+            <p class="text-gray-500 text-sm">Start: 15/12/2025 | End: 20/12/2025</p>
+            <p class="text-blue-500 text-sm mb-2">Time remaining: Ended</p>
+            <button class="bg-gradient-to-r from-blue-500 to-green-500 text-white px-4 py-2 rounded mt-2 w-full">Vote Now</button>
           </div>
-          {% endfor %}
+
+          <div class="bg-white p-4 rounded shadow border-l-4 border-green-400">
+            <h4 class="font-bold">Board of Directors Election</h4>
+            <p class="text-gray-500 mb-2">Select members for the organization's board of directors for 2026.</p>
+            <p class="text-gray-500 text-sm">Start: 14/12/2025 | End: 18/12/2025</p>
+            <p class="text-blue-500 text-sm mb-2">Time remaining: Ended</p>
+            <button class="bg-gradient-to-r from-blue-500 to-green-500 text-white px-4 py-2 rounded mt-2 w-full">Vote Now</button>
+          </div>
+
+          <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-400">
+            <h4 class="font-bold">Budget Allocation Vote</h4>
+            <p class="text-gray-500 mb-2">Vote on how the annual budget should be allocated across departments.</p>
+            <p class="text-gray-500 text-sm">Start: 22/12/2025 | End: 25/12/2025</p>
+            <p class="text-yellow-500 text-sm mb-2">Upcoming</p>
+            <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded mt-2 w-full cursor-not-allowed">Coming Soon</button>
+          </div>
+
+          <div class="bg-white p-4 rounded shadow border-l-4 border-gray-400">
+            <h4 class="font-bold">Club Activities Committee</h4>
+            <p class="text-gray-500 mb-2">Choose representatives for the club activities planning committee.</p>
+            <p class="text-gray-500 text-sm">Start: 01/12/2025 | End: 10/12/2025</p>
+            <p class="text-gray-400 text-sm mb-2">Election Ended</p>
+            <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded mt-2 w-full cursor-not-allowed">Election Ended</button>
+          </div>
         </div>
       </section>
 
@@ -115,12 +120,14 @@
       <section>
         <h3 class="text-xl font-bold mb-3">Recent Activity</h3>
         <div class="space-y-2">
-          {% for activity in recent_activity %}
           <div class="bg-white p-4 rounded shadow flex justify-between items-center">
-            <span>{{ activity.title }} <br> <small class="text-gray-500">{{ activity.date }}</small></span>
-            <a href="{{ activity.receipt_url }}" class="text-blue-500 underline">Download Receipt</a>
+            <span>Board of Directors Election <br> <small class="text-gray-500">2025-12-16 10:30 AM</small></span>
+            <a href="#" class="text-blue-500 underline">Download Receipt</a>
           </div>
-          {% endfor %}
+          <div class="bg-white p-4 rounded shadow flex justify-between items-center">
+            <span>Student Council President 2025 <br> <small class="text-gray-500">2025-12-15 02:45 PM</small></span>
+            <a href="#" class="text-blue-500 underline">Download Receipt</a>
+          </div>
         </div>
       </section>
 
