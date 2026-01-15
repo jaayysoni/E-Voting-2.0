@@ -87,13 +87,19 @@
               {{ election.status }}
             </p>
 
+            <!-- Button Logic -->
             {% if election.status == 'Active' %}
-            <a href="/voter/login?election_id={{ election.election_id }}"
-               class="block text-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-3">
-               Vote Now
-            </a>
+              <a href="/voter/login?election_id={{ election.election_id }}"
+                 class="block text-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-3">
+                 Vote Now
+              </a>
+            {% elif election.status == 'Completed' %}
+              <a href="/result?election_id={{ election.election_id }}"
+                 class="block text-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-3">
+                 View Result
+              </a>
             {% else %}
-            <span class="block text-center text-gray-400 mt-3">Voting not available</span>
+              <span class="block text-center text-gray-400 mt-3">Voting not available</span>
             {% endif %}
 
           </div>

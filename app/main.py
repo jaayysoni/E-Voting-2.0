@@ -351,6 +351,7 @@ def voter_login_post(request: Request, email: str = Form(...), password: str = F
         }
     )
 
+
 # ================= VOTE =================
 @app.post("/vote", response_class=HTMLResponse)
 def submit_vote(
@@ -404,23 +405,35 @@ def submit_vote(
 # ================= RESULT =================
 @app.get("/result", response_class=HTMLResponse)
 def result_page(request: Request, election_id: str):
+    # Fetch the election by ID
     ec = ec_col.find_one({"election_id": election_id})
     if not ec:
         return HTMLResponse("Election not found", status_code=404)
 
+    # Extract election details
     election = ec.get("election", {})
     voters = list(voters_col.find({"election_id": election_id}))
     candidates = election.get("candidates", [])
 
+    # Calculate total votes cast
     total_votes = sum(1 for v in voters if v.get("has_voted"))
 
+    # Compute votes and percentage for each candidate
     for c in candidates:
-        votes = sum(1 for v in voters if v.get("voted_for") == str(c["_id"]))
+        votes = sum(1 for v in voters if v.get("voted_for") == str(c.get("_id")))
         c["votes"] = votes
         c["percentage"] = round((votes / total_votes * 100) if total_votes else 0, 1)
 
+        # Ensure optional fields exist for template
+        c["name"] = c.get("name", "Candidate")
+        c["party_name"] = c.get("party_name", "Independent")
+        c["image_url"] = c.get("image_url", "/static/uploads/default.png")
+        c["party_symbol_url"] = c.get("party_symbol_url", "/static/uploads/default-symbol.png")
+
+    # Sort candidates by votes descending
     candidates.sort(key=lambda x: x["votes"], reverse=True)
 
+    # Render the results page
     return templates.TemplateResponse(
         "Result.html",
         {

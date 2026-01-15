@@ -17,11 +17,15 @@
   <!-- ================= Results Header ================= -->
   <section class="w-full max-w-4xl bg-white rounded-xl shadow-md p-6 text-center mb-6">
       <h1 class="text-3xl font-bold text-green-600 mb-2">Election Results</h1>
-      <p class="text-gray-600 mb-1">{{ election.name }}</p>
-      <p class="text-gray-500 text-sm mb-2">Results declared on {{ election.result_date }}</p>
+      <p class="text-gray-600 mb-1">{{ election.name if election and election.name else "Election" }}</p>
+      <p class="text-gray-500 text-sm mb-2">
+        Results declared on {{ election.result_date if election and election.result_date else "N/A" }}
+      </p>
     
       <!-- Total Votes -->
-      <p class="text-gray-700 font-semibold text-lg">Total Votes Cast: {{ election.total_votes }}</p>
+      <p class="text-gray-700 font-semibold text-lg">
+        Total Votes Cast: {{ total_votes if total_votes is not none else 0 }}
+      </p>
   </section>
 
   <!-- ================= Candidates Results Section ================= -->
@@ -37,15 +41,24 @@
           </div>
         {% endif %}
 
-        <img src="{{ candidate.image_url }}" alt="{{ candidate.name }}" 
+        <!-- Candidate Image -->
+        <img src="{{ candidate.image_url if candidate.image_url else '/static/uploads/default.png' }}" 
+             alt="{{ candidate.name }}" 
              class="{% if loop.first %} w-32 h-32 {% else %} w-24 h-24 {% endif %} rounded-full mb-3">
-        <h2 class="text-xl font-bold">{{ candidate.name }}</h2>
-        <p class="text-gray-500 text-sm mb-2">Party: {{ candidate.party_name }}</p>
-        <img src="{{ candidate.party_symbol_url }}" alt="Party Symbol" 
+
+        <!-- Candidate Name & Party -->
+        <h2 class="text-xl font-bold">{{ candidate.name if candidate.name else "Candidate" }}</h2>
+        <p class="text-gray-500 text-sm mb-2">Party: {{ candidate.party_name if candidate.party_name else "Independent" }}</p>
+
+        <!-- Party Symbol -->
+        <img src="{{ candidate.party_symbol_url if candidate.party_symbol_url else '/static/uploads/default-symbol.png' }}" 
+             alt="Party Symbol" 
              class="{% if loop.first %} w-10 h-10 {% else %} w-8 h-8 {% endif %} mb-2">
-        <p class="text-gray-700 font-semibold">Votes: {{ candidate.votes }}</p>
+
+        <!-- Votes & Percentage -->
+        <p class="text-gray-700 font-semibold">Votes: {{ candidate.votes if candidate.votes is not none else 0 }}</p>
         <p class="{% if loop.first %} text-green-600 {% elif loop.index == 2 %} text-blue-500 {% else %} text-red-500 {% endif %} font-semibold">
-          Percentage: {{ candidate.percentage }}%
+          Percentage: {{ candidate.percentage if candidate.percentage is not none else 0 }}%
         </p>
       </div>
     {% endfor %}
@@ -60,19 +73,11 @@
   const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
 
   // Fire confetti
-  myConfetti({
-    particleCount: 150,
-    spread: 70,
-    origin: { y: 0.6 }
-  });
+  myConfetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
-  // Optionally, repeat for more celebration
+  // Repeat celebration
   setInterval(() => {
-    myConfetti({
-      particleCount: 50,
-      spread: 50,
-      origin: { y: 0.6 }
-    });
+    myConfetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
   }, 2000);
 </script>
 
