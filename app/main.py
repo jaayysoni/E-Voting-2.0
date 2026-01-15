@@ -3,9 +3,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from bcrypt import checkpw
+from bcrypt import hashpw, gensalt
 from datetime import datetime
 from pathlib import Path
 import uuid
+
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -203,11 +205,15 @@ def create_election_post(
 def add_voter_post(
     election_id: str = Form(...),
     name: str = Form(...),
-    email: str = Form(...)
+    email: str = Form(...),
+    password: str = Form(...)
 ):
+    password_hash = hashpw(password.encode(), gensalt()).decode()
+
     voters_col.insert_one({
         "name": name,
         "email": email,
+        "password_hash": password_hash,
         "election_id": election_id,
         "has_voted": False
     })
@@ -292,13 +298,20 @@ def voter_login_get(request: Request):
     return templates.TemplateResponse("Login.html", {"request": request})
 
 @app.post("/voter/login", response_class=HTMLResponse)
-def voter_login_post(request: Request, email: str = Form(...)):
+def voter_login_post(request: Request, email: str = Form(...), password: str = Form(...)):
     voter = voters_col.find_one({"email": email})
 
     if not voter:
         return templates.TemplateResponse(
             "Login.html",
             {"request": request, "error": "Voter not found"}
+        )
+
+    # Verify password
+    if not checkpw(password.encode(), voter["password_hash"].encode()):
+        return templates.TemplateResponse(
+            "Login.html",
+            {"request": request, "error": "Incorrect password"}
         )
 
     ec = ec_col.find_one({"election_id": voter["election_id"]})

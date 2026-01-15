@@ -7,9 +7,6 @@
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body class="bg-gray-100 font-sans">
@@ -28,7 +25,7 @@
       </header>
 
       <!-- Login Form -->
-      <form onsubmit="login(event)" class="space-y-4">
+      <form method="POST" action="/voter/login" class="space-y-4">
 
         <!-- Email -->
         <div>
@@ -37,7 +34,7 @@
           </label>
           <input
             type="email"
-            id="email"
+            name="email"
             placeholder="Enter registered email"
             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
             required
@@ -51,7 +48,7 @@
           </label>
           <input
             type="password"
-            id="password"
+            name="password"
             placeholder="Enter your password"
             class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
             required
@@ -59,7 +56,9 @@
         </div>
 
         <!-- Error Message -->
-        <p id="error-message" class="text-red-500 text-sm hidden"></p>
+        {% if error %}
+          <p class="text-red-500 text-sm">{{ error }}</p>
+        {% endif %}
 
         <!-- Forgot Password -->
         <div class="flex justify-end">
@@ -71,7 +70,6 @@
         <!-- Login Button -->
         <button
           type="submit"
-          id="login-btn"
           class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition"
         >
           Login
@@ -130,46 +128,6 @@
 
     </section>
   </main>
-
-  <!-- ================= Supabase Login Logic ================= -->
-  <script>
-    // Initialize Supabase client
-    const supabase = supabase.createClient(
-      "https://tsouiulbwxgnunxbmrgv.supabase.co", // your project URL
-      "sb_publishable_tibZIHFer3tv0qpQG2FZNA_FgSbLCbx" // your ANON key
-    );
-
-    async function login(event) {
-      event.preventDefault();
-
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const errorMessage = document.getElementById("error-message");
-      const loginBtn = document.getElementById("login-btn");
-
-      // Show loading state
-      loginBtn.disabled = true;
-      loginBtn.innerText = "Logging in...";
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        errorMessage.innerText = error.message;
-        errorMessage.classList.remove("hidden");
-        loginBtn.disabled = false;
-        loginBtn.innerText = "Login";
-        return;
-      }
-
-      // Success → redirect to voting page
-      errorMessage.classList.add("hidden");
-      alert("Login successful! Redirecting to vote page...");
-      window.location.href = "/vote";
-    }
-  </script>
 
 </body>
 </html>

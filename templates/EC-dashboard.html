@@ -59,7 +59,6 @@
       <h2 class="text-xl font-bold mb-4">Election</h2>
 
       {% if not election %}
-      <!-- Show form if election not created -->
       <div class="bg-white p-4 rounded shadow" id="create-election-form">
         <form method="POST" action="/create-election" class="space-y-4">
           <input type="hidden" name="election_id" value="{{ ec.election_id if ec else '' }}">
@@ -79,7 +78,6 @@
         </form>
       </div>
       {% else %}
-      <!-- Show election details if already created -->
       <div class="bg-white p-4 rounded shadow">
         <p class="text-gray-700">Election is already created.</p>
         <p class="mt-2"><strong>Election Name:</strong> {{ election.name }}</p>
@@ -96,11 +94,12 @@
     <section id="voters-section">
       <h2 class="text-xl font-bold mb-4">Voter Management</h2>
       <div class="bg-white p-4 rounded shadow mb-4" id="add-voter-form">
-        <form method="POST" action="/add-voter" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form method="POST" action="/add-voter" class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <input type="hidden" name="election_id" value="{{ ec.election_id if ec else '' }}">
           <input type="text" name="name" placeholder="Voter Name" required class="border p-2 rounded"/>
           <input type="email" name="email" placeholder="Voter Email" required class="border p-2 rounded"/>
-          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:opacity-90">Add Voter</button>
+          <input type="password" name="password" placeholder="Voter Password" required class="border p-2 rounded"/>
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:opacity-90 col-span-full md:col-span-1">Add Voter</button>
         </form>
       </div>
 
@@ -110,6 +109,8 @@
             <tr>
               <th class="px-4 py-2 border-b">Voter Name</th>
               <th class="px-4 py-2 border-b">Email</th>
+              <th class="px-4 py-2 border-b">Password</th>
+              <th class="px-4 py-2 border-b">Voted Status</th>
               <th class="px-4 py-2 border-b">Actions</th>
             </tr>
           </thead>
@@ -119,6 +120,20 @@
               <td class="px-4 py-2 border-b">{{ voter.name }}</td>
               <td class="px-4 py-2 border-b">{{ voter.email }}</td>
               <td class="px-4 py-2 border-b">
+                {% if voter.password_hash %}
+                  ••••••••
+                {% else %}
+                  Not Set
+                {% endif %}
+              </td>
+              <td class="px-4 py-2 border-b">
+                {% if voter.voted %}
+                  <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">Voted</span>
+                {% else %}
+                  <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-sm">Not Voted</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-2 border-b flex gap-2">
                 <form method="POST" action="/remove-voter/{{ voter._id|string }}">
                   <input type="hidden" name="election_id" value="{{ ec.election_id }}">
                   <button type="submit" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Remove</button>
