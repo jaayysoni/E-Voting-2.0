@@ -355,8 +355,8 @@ def voter_login_post(request: Request, email: str = Form(...), password: str = F
 @app.post("/vote", response_class=HTMLResponse)
 def submit_vote(
     request: Request,
-    voter_id: str = Form(...),       # make required
-    candidate_id: str = Form(...)    # make required
+    voter_id: str = Form(...),       # required
+    candidate_id: str = Form(...)    # required
 ):
     # Fetch voter by UUID string
     voter = voters_col.find_one({"_id": voter_id})
@@ -367,25 +367,34 @@ def submit_vote(
     if voter.get("has_voted"):
         return HTMLResponse("You have already voted.", status_code=400)
 
-    # Update voter with vote info
+    # Generate unique vote token
+    vote_token = str(uuid.uuid4())
+
+    # Update voter with vote info AND store token in DB
     voters_col.update_one(
         {"_id": voter_id},
-        {"$set": {"has_voted": True, "voted_for": candidate_id}}
+        {"$set": {
+            "has_voted": True,
+            "voted_for": candidate_id,
+            "vote_token": vote_token
+        }}
     )
 
     # Fetch election info
     ec = ec_col.find_one({"election_id": voter["election_id"]})
     election = ec.get("election", {}) if ec else {}
 
-    # Optional: Generate a simple vote token for the voter
-    vote_token = str(uuid.uuid4())
+    # Include updated voter info (with token) for template
+    voter["has_voted"] = True
+    voter["voted_for"] = candidate_id
+    voter["vote_token"] = vote_token
 
-    # Render thankyou page with voter info
+    # Render thankyou page with voter info and token
     return templates.TemplateResponse(
         "thankyou.html",
         {
             "request": request,
-            "voter": voter,  # include voter info (name + email)
+            "voter": voter,  # name + email
             "election": election,
             "vote_datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "vote_token": vote_token
