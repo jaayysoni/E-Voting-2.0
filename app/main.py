@@ -355,16 +355,9 @@ def voter_login_post(request: Request, email: str = Form(...), password: str = F
 @app.post("/vote", response_class=HTMLResponse)
 def submit_vote(
     request: Request,
-    voter_id: str = Form(None),
-    candidate_id: str = Form(None)
+    voter_id: str = Form(...),       # make required
+    candidate_id: str = Form(...)    # make required
 ):
-    # Validate that form fields are present
-    if not voter_id or not candidate_id:
-        return HTMLResponse(
-            "Invalid request: missing voter or candidate information.",
-            status_code=400
-        )
-
     # Fetch voter by UUID string
     voter = voters_col.find_one({"_id": voter_id})
     if not voter:
@@ -384,12 +377,18 @@ def submit_vote(
     ec = ec_col.find_one({"election_id": voter["election_id"]})
     election = ec.get("election", {}) if ec else {}
 
+    # Optional: Generate a simple vote token for the voter
+    vote_token = str(uuid.uuid4())
+
+    # Render thankyou page with voter info
     return templates.TemplateResponse(
         "thankyou.html",
         {
             "request": request,
+            "voter": voter,  # include voter info (name + email)
             "election": election,
-            "vote_datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "vote_datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "vote_token": vote_token
         }
     )
 
@@ -427,3 +426,33 @@ def result_page(request: Request, election_id: str):
 @app.get("/auth/google", name="google_oauth_login")
 def google_oauth_login():
     return HTMLResponse("Google login coming soon!")
+
+
+
+
+
+
+# ================= TEST THANKYOU PAGE =================
+@app.get("/thankyou", response_class=HTMLResponse)
+def test_thankyou(request: Request):
+    # Dummy voter and election data
+    voter = {
+        "name": "Test Voter",
+        "_id": "1234-5678-uuid"
+    }
+    election = {
+        "name": "Test Election"
+    }
+    vote_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    vote_token = "TEST-TOKEN-1234"
+
+    return templates.TemplateResponse(
+        "thankyou.html",
+        {
+            "request": request,
+            "voter": voter,
+            "election": election,
+            "vote_datetime": vote_datetime,
+            "vote_token": vote_token
+        }
+    )
