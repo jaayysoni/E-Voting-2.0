@@ -76,8 +76,8 @@
             <p class="text-gray-400 text-sm">Organized by: {{ election.ec_name }}</p>
 
             <p class="text-gray-500 text-sm mt-1">
-              Start: {{ election.start_time }} <br />
-              End: {{ election.end_time }}
+              Start: {{ election.start_date|datetimeformat }} <br />
+              End: {{ election.end_date|datetimeformat }}
             </p>
 
             <p class="mt-2 text-sm font-semibold

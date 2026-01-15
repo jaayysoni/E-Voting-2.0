@@ -57,7 +57,9 @@
     <!-- Election Section -->
     <section id="election-section">
       <h2 class="text-xl font-bold mb-4">Election</h2>
+
       {% if not election %}
+      <!-- Show form if election not created -->
       <div class="bg-white p-4 rounded shadow" id="create-election-form">
         <form method="POST" action="/create-election" class="space-y-4">
           <input type="hidden" name="election_id" value="{{ ec.election_id if ec else '' }}">
@@ -77,6 +79,7 @@
         </form>
       </div>
       {% else %}
+      <!-- Show election details if already created -->
       <div class="bg-white p-4 rounded shadow">
         <p class="text-gray-700">Election is already created.</p>
         <p class="mt-2"><strong>Election Name:</strong> {{ election.name }}</p>

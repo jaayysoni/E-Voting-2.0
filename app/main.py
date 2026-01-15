@@ -11,7 +11,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 
 from db.db import ec_col, voters_col
-from app.users.services import register_ec, create_election, add_candidate
+from app.users.services import register_ec, add_candidate  # removed create_election import
 
 # ---------------- FastAPI app ----------------
 app = FastAPI(title="E-Voting 2.0")
@@ -20,6 +20,16 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 Path("static/uploads").mkdir(parents=True, exist_ok=True)
+
+# ---------------- Jinja2 filter for formatting dates ----------------
+def datetimeformat(value, format="%d/%m/%Y %H:%M"):
+    if not value:
+        return "Not set"
+    if isinstance(value, str):
+        value = datetime.fromisoformat(value)
+    return value.strftime(format)
+
+templates.env.filters['datetimeformat'] = datetimeformat
 
 # ================= UNIVERSAL DASHBOARD =================
 @app.get("/", response_class=HTMLResponse)
@@ -30,22 +40,19 @@ def dashboard(request: Request):
 
     for ec in ecs:
         election = ec.get("election")
-        if not election:
-            continue  # skip ECs with no election
-
-        # Safely get start and end times
-        start_time = election.get("start_time")
-        end_time = election.get("end_time")
-        if not start_time or not end_time:
+        # Skip incomplete elections
+        if not election or not election.get("name") or not election.get("start_date") or not election.get("end_date"):
             continue
 
-        # Convert to datetime if stored as string
+        start_time = election.get("start_date")
+        end_time = election.get("end_date")
+
         if isinstance(start_time, str):
             start_time = datetime.fromisoformat(start_time)
         if isinstance(end_time, str):
             end_time = datetime.fromisoformat(end_time)
 
-        # Determine election status
+        # Determine status
         if start_time <= now <= end_time:
             status = "Active"
         elif now < start_time:
@@ -57,10 +64,13 @@ def dashboard(request: Request):
             "ec_name": ec.get("name", "Unknown EC"),
             "election_id": election.get("election_id", "N/A"),
             "name": election.get("name", "Unnamed Election"),
-            "start_time": start_time.strftime("%d/%m/%Y %H:%M"),
-            "end_time": end_time.strftime("%d/%m/%Y %H:%M"),
+            "start_date": start_time,
+            "end_date": end_time,
             "status": status
         })
+    # Sort elections by status: Active first, Upcoming next, Completed last
+    status_order = {"Active": 0, "Upcoming": 1, "Completed": 2}
+    elections.sort(key=lambda x: status_order.get(x["status"], 3))
 
     return templates.TemplateResponse(
         "Dashboard.html",
@@ -136,9 +146,13 @@ def ec_dashboard(request: Request, election_id: str):
     if not ec:
         return HTMLResponse("EC not found", status_code=404)
 
-    election = ec.get("election", {})
+    election = ec.get("election")
+    # Only treat election as existing if it has name, start and end date
+    if not election or not election.get("name") or not election.get("start_date") or not election.get("end_date"):
+        election = None
+
     voters = list(voters_col.find({"election_id": election_id}))
-    candidates = election.get("candidates", [])
+    candidates = election.get("candidates", []) if election else []
 
     total_voters = len(voters)
     votes_cast = sum(1 for v in voters if v.get("has_voted"))
@@ -164,11 +178,19 @@ def create_election_post(
     start_date: str = Form(...),
     end_date: str = Form(...)
 ):
-    create_election(
-        election_id,
-        name,
-        datetime.fromisoformat(start_date),
-        datetime.fromisoformat(end_date)
+    """Create election and save it to EC document"""
+    election_data = {
+        "election_id": election_id,
+        "name": name,
+        "start_date": datetime.fromisoformat(start_date).isoformat(),
+        "end_date": datetime.fromisoformat(end_date).isoformat(),
+        "status": "Upcoming",
+        "candidates": []
+    }
+
+    ec_col.update_one(
+        {"election_id": election_id},
+        {"$set": {"election": election_data}}
     )
 
     return RedirectResponse(
@@ -349,7 +371,6 @@ def result_page(request: Request, election_id: str):
             "total_votes": total_votes
         }
     )
-
 
 # ================= dummy oauth =================
 @app.get("/auth/google", name="google_oauth_login")
