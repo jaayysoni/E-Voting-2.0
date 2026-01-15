@@ -6,25 +6,72 @@ from bcrypt import checkpw
 from datetime import datetime
 from pathlib import Path
 import uuid
+
 from bson import ObjectId
 from bson.errors import InvalidId
-import os
 
 from db.db import ec_col, voters_col
 from app.users.services import register_ec, create_election, add_candidate
 
 # ---------------- FastAPI app ----------------
 app = FastAPI(title="E-Voting 2.0")
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Ensure upload folder exists
 Path("static/uploads").mkdir(parents=True, exist_ok=True)
 
-# ================= DASHBOARD =================
+# ================= UNIVERSAL DASHBOARD =================
 @app.get("/", response_class=HTMLResponse)
 def dashboard(request: Request):
-    return templates.TemplateResponse("Dashboard.html", {"request": request})
+    ecs = list(ec_col.find({}))
+    elections = []
+    now = datetime.now()
+
+    for ec in ecs:
+        election = ec.get("election")
+        if not election:
+            continue  # skip ECs with no election
+
+        # Safely get start and end times
+        start_time = election.get("start_time")
+        end_time = election.get("end_time")
+        if not start_time or not end_time:
+            continue
+
+        # Convert to datetime if stored as string
+        if isinstance(start_time, str):
+            start_time = datetime.fromisoformat(start_time)
+        if isinstance(end_time, str):
+            end_time = datetime.fromisoformat(end_time)
+
+        # Determine election status
+        if start_time <= now <= end_time:
+            status = "Active"
+        elif now < start_time:
+            status = "Upcoming"
+        else:
+            status = "Completed"
+
+        elections.append({
+            "ec_name": ec.get("name", "Unknown EC"),
+            "election_id": election.get("election_id", "N/A"),
+            "name": election.get("name", "Unnamed Election"),
+            "start_time": start_time.strftime("%d/%m/%Y %H:%M"),
+            "end_time": end_time.strftime("%d/%m/%Y %H:%M"),
+            "status": status
+        })
+
+    return templates.TemplateResponse(
+        "Dashboard.html",
+        {
+            "request": request,
+            "elections": elections,
+            "total_elections": len(elections),
+            "active_count": sum(1 for e in elections if e["status"] == "Active"),
+            "upcoming_count": sum(1 for e in elections if e["status"] == "Upcoming")
+        }
+    )
 
 # ================= EC SIGNUP =================
 @app.get("/ec/signup", response_class=HTMLResponse)
@@ -42,19 +89,20 @@ def ec_signup_post(
     if password != confirm_password:
         return templates.TemplateResponse(
             "EC-signup.html",
-            {"request": request, "error": "Passwords do not match", "name": name, "email": email}
+            {"request": request, "error": "Passwords do not match"}
         )
 
-    success, election_id = register_ec(name, email, password)
+    success, result = register_ec(name, email, password)
+
     if not success:
         return templates.TemplateResponse(
             "EC-signup.html",
-            {"request": request, "error": election_id, "name": name, "email": email}
+            {"request": request, "error": result}
         )
 
     return templates.TemplateResponse(
         "EC-login.html",
-        {"request": request, "message": f"Signup successful! Your Election ID: {election_id}"}
+        {"request": request, "message": f"Signup successful! Election ID: {result}"}
     )
 
 # ================= EC LOGIN =================
@@ -62,20 +110,24 @@ def ec_signup_post(
 def ec_login_get(request: Request):
     return templates.TemplateResponse("EC-login.html", {"request": request})
 
-@app.post("/ec/login", response_class=HTMLResponse)
+@app.post("/ec/login")
 def ec_login_post(
     request: Request,
     email: str = Form(...),
     password: str = Form(...)
 ):
     ec = ec_col.find_one({"email": email})
-    if not ec or not checkpw(password.encode("utf-8"), ec["password_hash"].encode("utf-8")):
+
+    if not ec or not checkpw(password.encode(), ec["password_hash"].encode()):
         return templates.TemplateResponse(
             "EC-login.html",
-            {"request": request, "error": "Invalid email or password", "email": email}
+            {"request": request, "error": "Invalid credentials"}
         )
 
-    return RedirectResponse(f"/ec/dashboard?election_id={ec['election_id']}", status_code=303)
+    return RedirectResponse(
+        f"/ec/dashboard?election_id={ec['election_id']}",
+        status_code=303
+    )
 
 # ================= EC DASHBOARD =================
 @app.get("/ec/dashboard", response_class=HTMLResponse)
@@ -85,7 +137,7 @@ def ec_dashboard(request: Request, election_id: str):
         return HTMLResponse("EC not found", status_code=404)
 
     election = ec.get("election", {})
-    voters = list(voters_col.find({"election_id": ec["election_id"]}))
+    voters = list(voters_col.find({"election_id": election_id}))
     candidates = election.get("candidates", [])
 
     total_voters = len(voters)
@@ -105,89 +157,112 @@ def ec_dashboard(request: Request, election_id: str):
     )
 
 # ================= CREATE ELECTION =================
-@app.post("/create-election", response_class=HTMLResponse)
+@app.post("/create-election")
 def create_election_post(
-    request: Request,
     election_id: str = Form(...),
     name: str = Form(...),
     start_date: str = Form(...),
     end_date: str = Form(...)
 ):
-    start_dt = datetime.fromisoformat(start_date)
-    end_dt = datetime.fromisoformat(end_date)
+    create_election(
+        election_id,
+        name,
+        datetime.fromisoformat(start_date),
+        datetime.fromisoformat(end_date)
+    )
 
-    create_election(election_id, name, start_dt, end_dt)
-
-    return RedirectResponse(f"/ec/dashboard?election_id={election_id}", status_code=303)
+    return RedirectResponse(
+        f"/ec/dashboard?election_id={election_id}",
+        status_code=303
+    )
 
 # ================= ADD VOTER =================
-@app.post("/add-voter", response_class=HTMLResponse)
+@app.post("/add-voter")
 def add_voter_post(
-    request: Request,
     election_id: str = Form(...),
     name: str = Form(...),
     email: str = Form(...)
 ):
-    voter_data = {
+    voters_col.insert_one({
         "name": name,
         "email": email,
         "election_id": election_id,
         "has_voted": False
-    }
-    voters_col.insert_one(voter_data)
-    return RedirectResponse(f"/ec/dashboard?election_id={election_id}", status_code=303)
+    })
+
+    return RedirectResponse(
+        f"/ec/dashboard?election_id={election_id}",
+        status_code=303
+    )
 
 # ================= REMOVE VOTER =================
-@app.post("/remove-voter/{voter_id}", response_class=HTMLResponse)
-def remove_voter(voter_id: str, election_id: str = Form(...)):
+@app.post("/remove-voter/{voter_id}")
+def remove_voter(
+    voter_id: str,
+    election_id: str = Form(...)
+):
     try:
         voters_col.delete_one({"_id": ObjectId(voter_id)})
-    except Exception:
+    except InvalidId:
         return HTMLResponse("Invalid voter ID", status_code=400)
-    return RedirectResponse(f"/ec/dashboard?election_id={election_id}", status_code=303)
+
+    return RedirectResponse(
+        f"/ec/dashboard?election_id={election_id}",
+        status_code=303
+    )
 
 # ================= ADD CANDIDATE =================
-@app.post("/add-candidate", response_class=HTMLResponse)
+@app.post("/add-candidate")
 def add_candidate_post(
-    request: Request,
     election_id: str = Form(...),
     name: str = Form(...),
     party: str = Form(...),
     moto: str = Form(None),
     profile_pic: UploadFile | None = File(None)
 ):
-    file_path = None
+    image_path = None
 
     if profile_pic and profile_pic.filename:
-        upload_dir = Path("static/uploads")
-        upload_dir.mkdir(parents=True, exist_ok=True)
         ext = Path(profile_pic.filename).suffix
-        unique_filename = f"{uuid.uuid4()}{ext}"
-        full_path = upload_dir / unique_filename
+        filename = f"{uuid.uuid4()}{ext}"
+        full_path = Path("static/uploads") / filename
+
         with open(full_path, "wb") as f:
             f.write(profile_pic.file.read())
-        file_path = f"uploads/{unique_filename}"
 
-    add_candidate(election_id, name, party, moto, file_path)
-    return RedirectResponse(f"/ec/dashboard?election_id={election_id}", status_code=303)
+        image_path = f"uploads/{filename}"
+
+    add_candidate(election_id, name, party, moto, image_path)
+
+    return RedirectResponse(
+        f"/ec/dashboard?election_id={election_id}",
+        status_code=303
+    )
 
 # ================= REMOVE CANDIDATE =================
-@app.post("/remove-candidate/{candidate_id}", response_class=HTMLResponse)
-def remove_candidate(candidate_id: str, election_id: str = Form(...)):
-    try:
-        ec = ec_col.find_one({"election_id": election_id})
-        if not ec or "election" not in ec:
-            return HTMLResponse("Election not found", status_code=404)
+@app.post("/remove-candidate/{candidate_id}")
+def remove_candidate(
+    candidate_id: str,
+    election_id: str = Form(...)
+):
+    ec = ec_col.find_one({"election_id": election_id})
+    if not ec or "election" not in ec:
+        return HTMLResponse("Election not found", status_code=404)
 
-        ec["election"]["candidates"] = [
-            c for c in ec["election"].get("candidates", [])
-            if str(c["_id"]) != candidate_id
-        ]
-        ec_col.update_one({"election_id": election_id}, {"$set": {"election": ec["election"]}})
-    except Exception:
-        return HTMLResponse("Invalid candidate ID", status_code=400)
+    ec["election"]["candidates"] = [
+        c for c in ec["election"]["candidates"]
+        if str(c["_id"]) != candidate_id
+    ]
 
-    return RedirectResponse(f"/ec/dashboard?election_id={election_id}", status_code=303)
+    ec_col.update_one(
+        {"election_id": election_id},
+        {"$set": {"election": ec["election"]}}
+    )
+
+    return RedirectResponse(
+        f"/ec/dashboard?election_id={election_id}",
+        status_code=303
+    )
 
 # ================= VOTER LOGIN =================
 @app.get("/voter/login", response_class=HTMLResponse)
@@ -197,33 +272,37 @@ def voter_login_get(request: Request):
 @app.post("/voter/login", response_class=HTMLResponse)
 def voter_login_post(request: Request, email: str = Form(...)):
     voter = voters_col.find_one({"email": email})
+
     if not voter:
         return templates.TemplateResponse(
             "Login.html",
-            {"request": request, "error": "Voter not found", "email": email}
+            {"request": request, "error": "Voter not found"}
         )
 
     ec = ec_col.find_one({"election_id": voter["election_id"]})
     election = ec.get("election", {})
-    candidates = election.get("candidates", [])
 
     return templates.TemplateResponse(
         "vote.html",
-        {"request": request, "voter": voter, "election": election, "candidates": candidates}
+        {
+            "request": request,
+            "voter": voter,
+            "election": election,
+            "candidates": election.get("candidates", [])
+        }
     )
 
 # ================= VOTE =================
 @app.post("/vote", response_class=HTMLResponse)
-def submit_vote(request: Request, voter_id: str = Form(...), candidate_id: str = Form(...)):
-    try:
-        voter = voters_col.find_one({"_id": ObjectId(voter_id)})
-    except Exception:
-        return HTMLResponse("Invalid voter ID", status_code=400)
+def submit_vote(
+    request: Request,
+    voter_id: str = Form(...),
+    candidate_id: str = Form(...)
+):
+    voter = voters_col.find_one({"_id": ObjectId(voter_id)})
 
-    if not voter:
-        return HTMLResponse("Voter not found", status_code=404)
-    if voter.get("has_voted"):
-        return HTMLResponse("Voter has already voted", status_code=400)
+    if not voter or voter.get("has_voted"):
+        return HTMLResponse("Invalid vote", status_code=400)
 
     voters_col.update_one(
         {"_id": ObjectId(voter_id)},
@@ -231,14 +310,12 @@ def submit_vote(request: Request, voter_id: str = Form(...), candidate_id: str =
     )
 
     ec = ec_col.find_one({"election_id": voter["election_id"]})
-    election = ec.get("election", {})
 
     return templates.TemplateResponse(
         "thankyou.html",
         {
             "request": request,
-            "voter": voter,
-            "election": election,
+            "election": ec.get("election", {}),
             "vote_datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
     )
@@ -251,24 +328,30 @@ def result_page(request: Request, election_id: str):
         return HTMLResponse("Election not found", status_code=404)
 
     election = ec.get("election", {})
-    candidates = election.get("candidates", [])
     voters = list(voters_col.find({"election_id": election_id}))
+    candidates = election.get("candidates", [])
 
     total_votes = sum(1 for v in voters if v.get("has_voted"))
 
-    for candidate in candidates:
-        candidate_votes = sum(1 for v in voters if v.get("voted_for") == str(candidate["_id"]))
-        candidate["votes"] = candidate_votes
-        candidate["percentage"] = round((candidate_votes / total_votes * 100) if total_votes else 0, 1)
+    for c in candidates:
+        votes = sum(1 for v in voters if v.get("voted_for") == str(c["_id"]))
+        c["votes"] = votes
+        c["percentage"] = round((votes / total_votes * 100) if total_votes else 0, 1)
 
-    candidates.sort(key=lambda c: c["votes"], reverse=True)
+    candidates.sort(key=lambda x: x["votes"], reverse=True)
 
     return templates.TemplateResponse(
         "Result.html",
-        {"request": request, "election": election, "candidates": candidates, "total_votes": total_votes}
+        {
+            "request": request,
+            "election": election,
+            "candidates": candidates,
+            "total_votes": total_votes
+        }
     )
 
-# ================= OAUTH PLACEHOLDER =================
-@app.get("/auth/google")
+
+# ================= dummy oauth =================
+@app.get("/auth/google", name="google_oauth_login")
 def google_oauth_login():
-    return {"message": "Google OAuth not implemented yet"}
+    return HTMLResponse("Google login coming soon!")

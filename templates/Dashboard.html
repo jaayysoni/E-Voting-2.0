@@ -11,20 +11,18 @@
   <div class="flex">
 
     <!-- Sidebar Section -->
-    <section>
-      <aside class="w-64 bg-white min-h-screen border-r">
-        <div class="p-6">
-          <h1 class="text-xl font-bold text-green-600 mb-6">E-Voting <span class="text-gray-400 text-sm">v2.0</span></h1>
-          <nav class="space-y-3">
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>Organize an Election</a>
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>View Election Result</a>
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>View Voter List</a>
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>View Candidate list</a>
-            <a href="#" class="flex items-center p-2 rounded hover:bg-gray-100"><span class="material-icons mr-2"></span>Login to vote</a>
-          </nav>
-        </div>
-      </aside>
-    </section>
+    <aside class="w-64 bg-white min-h-screen border-r">
+      <div class="p-6">
+        <h1 class="text-xl font-bold text-green-600 mb-6">
+          E-Voting <span class="text-gray-400 text-sm">v2.0</span>
+        </h1>
+        <nav class="space-y-3">
+          <a href="/ec/signup" class="flex items-center p-2 rounded hover:bg-gray-100">Organize Election</a>
+          <a href="/ec/login" class="flex items-center p-2 rounded hover:bg-gray-100">EC Login</a>
+          <a href="/voter/login" class="flex items-center p-2 rounded hover:bg-gray-100">Login to vote</a>
+        </nav>
+      </div>
+    </aside>
 
     <!-- Main Content Section -->
     <section class="flex-1 p-6">
@@ -32,25 +30,7 @@
       <!-- Header Section -->
       <section class="mb-6">
         <div class="flex justify-between items-center">
-          <!-- Left: Greeting -->
-          <div>
-            <h2 class="text-2xl font-bold text-gray-800">Welcome</h2>
-          </div>
-          <!-- Right: Search, Notifications, Avatar -->
-          <div class="flex items-center space-x-4">
-            <input 
-              type="text" 
-              placeholder="Search elections..." 
-              class="px-5 py-2.5 rounded-full border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 w-64"
-            >
-            <button class="relative p-2 rounded-full hover:bg-gray-100 transition">
-              <span class="material-icons text-gray-600">notifications</span>
-              <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            <div class="w-10 h-10 rounded-full bg-purple-500 text-white flex items-center justify-center font-semibold">
-              -
-            </div>
-          </div>
+          <h2 class="text-2xl font-bold text-gray-800">Welcome</h2>
         </div>
       </section>
 
@@ -58,7 +38,9 @@
       <section class="mb-6">
         <div class="bg-gradient-to-r from-green-400 to-blue-500 text-white p-6 rounded-lg shadow-md">
           <h3 class="text-2xl font-bold mb-2">Your Vote Matters!</h3>
-          <p class="text-white/90 text-lg">Make your voice heard in the elections. Check the active elections below.</p>
+          <p class="text-white/90 text-lg">
+            Make your voice heard in the elections. Check all elections below.
+          </p>
         </div>
       </section>
 
@@ -66,74 +48,87 @@
       <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="bg-white p-4 rounded shadow">
           <p class="text-gray-500">Total Elections</p>
-          <h3 class="text-2xl font-bold">4</h3>
+          <h3 class="text-2xl font-bold">{{ total_elections }}</h3>
         </div>
         <div class="bg-white p-4 rounded shadow">
-          <p class="text-gray-500">Votes Cast</p>
-          <h3 class="text-2xl font-bold">2</h3>
+          <p class="text-gray-500">Active Elections</p>
+          <h3 class="text-2xl font-bold">{{ active_count }}</h3>
         </div>
         <div class="bg-white p-4 rounded shadow">
           <p class="text-gray-500">Upcoming Elections</p>
-          <h3 class="text-2xl font-bold">1</h3>
+          <h3 class="text-2xl font-bold">{{ upcoming_count }}</h3>
         </div>
       </section>
 
-      <!-- Active Elections Section -->
+      <!-- Elections Section -->
       <section class="mb-6">
-        <h3 class="text-xl font-bold mb-3">Active Elections</h3>
+        <h3 class="text-xl font-bold mb-3">Elections</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-white p-4 rounded shadow border-l-4 border-green-400">
-            <h4 class="font-bold">Student Council President 2025</h4>
-            <p class="text-gray-500 mb-2">Vote for your next student council president to lead our campus community.</p>
-            <p class="text-gray-500 text-sm">Start: 15/12/2025 | End: 20/12/2025</p>
-            <p class="text-blue-500 text-sm mb-2">Time remaining: Ended</p>
-            <button class="bg-gradient-to-r from-blue-500 to-green-500 text-white px-4 py-2 rounded mt-2 w-full">Vote Now</button>
-          </div>
 
-          <div class="bg-white p-4 rounded shadow border-l-4 border-green-400">
-            <h4 class="font-bold">Board of Directors Election</h4>
-            <p class="text-gray-500 mb-2">Select members for the organization's board of directors for 2026.</p>
-            <p class="text-gray-500 text-sm">Start: 14/12/2025 | End: 18/12/2025</p>
-            <p class="text-blue-500 text-sm mb-2">Time remaining: Ended</p>
-            <button class="bg-gradient-to-r from-blue-500 to-green-500 text-white px-4 py-2 rounded mt-2 w-full">Vote Now</button>
-          </div>
+          {% if elections %}
+          {% for election in elections %}
+          <div class="bg-white p-4 rounded shadow border-l-4
+            {% if election.status == 'Active' %} border-green-400
+            {% elif election.status == 'Upcoming' %} border-yellow-400
+            {% else %} border-gray-400 {% endif %}">
 
-          <div class="bg-white p-4 rounded shadow border-l-4 border-yellow-400">
-            <h4 class="font-bold">Budget Allocation Vote</h4>
-            <p class="text-gray-500 mb-2">Vote on how the annual budget should be allocated across departments.</p>
-            <p class="text-gray-500 text-sm">Start: 22/12/2025 | End: 25/12/2025</p>
-            <p class="text-yellow-500 text-sm mb-2">Upcoming</p>
-            <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded mt-2 w-full cursor-not-allowed">Coming Soon</button>
-          </div>
+            <h4 class="font-bold">{{ election.name }}</h4>
+            <p class="text-gray-400 text-sm">Organized by: {{ election.ec_name }}</p>
 
-          <div class="bg-white p-4 rounded shadow border-l-4 border-gray-400">
-            <h4 class="font-bold">Club Activities Committee</h4>
-            <p class="text-gray-500 mb-2">Choose representatives for the club activities planning committee.</p>
-            <p class="text-gray-500 text-sm">Start: 01/12/2025 | End: 10/12/2025</p>
-            <p class="text-gray-400 text-sm mb-2">Election Ended</p>
-            <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded mt-2 w-full cursor-not-allowed">Election Ended</button>
+            <p class="text-gray-500 text-sm mt-1">
+              Start: {{ election.start_time }} <br />
+              End: {{ election.end_time }}
+            </p>
+
+            <p class="mt-2 text-sm font-semibold
+              {% if election.status == 'Active' %} text-green-600
+              {% elif election.status == 'Upcoming' %} text-yellow-600
+              {% else %} text-gray-500 {% endif %}">
+              {{ election.status }}
+            </p>
+
+            {% if election.status == 'Active' %}
+            <a href="/voter/login?election_id={{ election.election_id }}"
+               class="block text-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-3">
+               Vote Now
+            </a>
+            {% else %}
+            <span class="block text-center text-gray-400 mt-3">Voting not available</span>
+            {% endif %}
+
           </div>
+          {% endfor %}
+          {% else %}
+          <p class="text-gray-500">No elections available.</p>
+          {% endif %}
+
         </div>
       </section>
 
-      <!-- Recent Activity Section -->
+      <!-- Instructions Section -->
       <section>
-        <h3 class="text-xl font-bold mb-3">Recent Activity</h3>
+        <h3 class="text-xl font-bold mb-3">Before You Vote</h3>
         <div class="space-y-2">
+          {% if elections %}
+          {% for election in elections %}
           <div class="bg-white p-4 rounded shadow flex justify-between items-center">
-            <span>Board of Directors Election <br> <small class="text-gray-500">2025-12-16 10:30 AM</small></span>
-            <a href="#" class="text-blue-500 underline">Download Receipt</a>
+            <span>
+              {{ election.name }} <br>
+              <small class="text-gray-500">Please read instructions before voting</small>
+            </span>
+            <a href="/instructions?election_id={{ election.election_id }}" class="text-blue-500 underline">
+              View Instructions
+            </a>
           </div>
-          <div class="bg-white p-4 rounded shadow flex justify-between items-center">
-            <span>Student Council President 2025 <br> <small class="text-gray-500">2025-12-15 02:45 PM</small></span>
-            <a href="#" class="text-blue-500 underline">Download Receipt</a>
-          </div>
+          {% endfor %}
+          {% else %}
+          <p class="text-gray-500">No instructions available.</p>
+          {% endif %}
         </div>
       </section>
 
-    </section> <!-- End Main Content Section -->
-
-  </div> <!-- End Flex -->
+    </section>
+  </div>
 
 </body>
 </html>
