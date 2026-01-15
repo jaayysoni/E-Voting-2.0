@@ -17,7 +17,9 @@
         {{ election.name }}
       </h1>
       <p class="text-gray-600 mb-1">{{ election.description }}</p>
-      <p class="text-gray-500 text-sm">Start: {{ election.start_date }} | End: {{ election.end_date }}</p>
+      <p class="text-gray-500 text-sm">
+        Start: {{ election.start_date }} | End: {{ election.end_date }}
+      </p>
       <p class="text-blue-500 text-sm">Time remaining: {{ election.time_remaining }}</p>
     </section>
 
@@ -34,7 +36,10 @@
 
         <!-- ================= Vote Form ================= -->
         <form method="POST" action="{{ url_for('submit_vote') }}" class="w-full mt-4">
-          <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+          <!-- Hidden inputs for candidate and voter IDs -->
+          <input type="hidden" name="candidate_id" value="{{ candidate._id }}">
+          <input type="hidden" name="voter_id" value="{{ voter._id }}">
+          
           <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition">
             Vote
           </button>
@@ -47,7 +52,9 @@
 
     <!-- ================= Voting Notice / Disclaimer ================= -->
     <section class="w-full max-w-3xl bg-white rounded-xl shadow-md p-4 mt-6 text-gray-500 text-sm">
-      <p><strong>Note:</strong> Once you vote, your selection cannot be changed. Make sure to confirm before clicking the Vote button.</p>
+      <p>
+        <strong>Note:</strong> Once you vote, your selection cannot be changed. Make sure to confirm before clicking the Vote button.
+      </p>
     </section>
 
   </main>

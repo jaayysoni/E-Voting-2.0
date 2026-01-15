@@ -2,15 +2,11 @@ from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from bcrypt import checkpw
-from bcrypt import hashpw, gensalt
+from bcrypt import checkpw, hashpw, gensalt
 from datetime import datetime
 from pathlib import Path
 import uuid
-
-
-from bson import ObjectId
-from bson.errors import InvalidId
+import re
 
 from db.db import ec_col, voters_col
 from app.users.services import register_ec, add_candidate  # removed create_election import
@@ -23,7 +19,7 @@ templates = Jinja2Templates(directory="templates")
 
 Path("static/uploads").mkdir(parents=True, exist_ok=True)
 
-# ---------------- Jinja2 filter for formatting dates ----------------
+# ---------------- Jinja2 filter ----------------
 def datetimeformat(value, format="%d/%m/%Y %H:%M"):
     if not value:
         return "Not set"
@@ -32,6 +28,12 @@ def datetimeformat(value, format="%d/%m/%Y %H:%M"):
     return value.strftime(format)
 
 templates.env.filters['datetimeformat'] = datetimeformat
+
+# ---------------- ObjectId Validation ----------------
+OBJECTID_REGEX = re.compile(r"^[0-9a-fA-F]{24}$")
+
+def is_valid_objectid(oid_str: str) -> bool:
+    return bool(OBJECTID_REGEX.fullmatch(oid_str))
 
 # ================= UNIVERSAL DASHBOARD =================
 @app.get("/", response_class=HTMLResponse)
@@ -42,7 +44,6 @@ def dashboard(request: Request):
 
     for ec in ecs:
         election = ec.get("election")
-        # Skip incomplete elections
         if not election or not election.get("name") or not election.get("start_date") or not election.get("end_date"):
             continue
 
@@ -54,7 +55,6 @@ def dashboard(request: Request):
         if isinstance(end_time, str):
             end_time = datetime.fromisoformat(end_time)
 
-        # Determine status
         if start_time <= now <= end_time:
             status = "Active"
         elif now < start_time:
@@ -70,7 +70,7 @@ def dashboard(request: Request):
             "end_date": end_time,
             "status": status
         })
-    # Sort elections by status: Active first, Upcoming next, Completed last
+
     status_order = {"Active": 0, "Upcoming": 1, "Completed": 2}
     elections.sort(key=lambda x: status_order.get(x["status"], 3))
 
@@ -149,7 +149,6 @@ def ec_dashboard(request: Request, election_id: str):
         return HTMLResponse("EC not found", status_code=404)
 
     election = ec.get("election")
-    # Only treat election as existing if it has name, start and end date
     if not election or not election.get("name") or not election.get("start_date") or not election.get("end_date"):
         election = None
 
@@ -180,7 +179,6 @@ def create_election_post(
     start_date: str = Form(...),
     end_date: str = Form(...)
 ):
-    """Create election and save it to EC document"""
     election_data = {
         "election_id": election_id,
         "name": name,
@@ -208,15 +206,29 @@ def add_voter_post(
     email: str = Form(...),
     password: str = Form(...)
 ):
+    # Check if email already exists
+    if voters_col.find_one({"email": email}):
+        return HTMLResponse(
+            f"Voter with email {email} already exists",
+            status_code=400
+        )
+
+    # Hash the password
     password_hash = hashpw(password.encode(), gensalt()).decode()
 
-    voters_col.insert_one({
+    # Create voter document
+    voter = {
+        "_id": str(uuid.uuid4()),
         "name": name,
         "email": email,
         "password_hash": password_hash,
         "election_id": election_id,
-        "has_voted": False
-    })
+        "has_voted": False,
+        "voted_for": None  # track candidate ID after voting
+    }
+
+    # Insert into DB
+    voters_col.insert_one(voter)
 
     return RedirectResponse(
         f"/ec/dashboard?election_id={election_id}",
@@ -229,10 +241,12 @@ def remove_voter(
     voter_id: str,
     election_id: str = Form(...)
 ):
-    try:
-        voters_col.delete_one({"_id": ObjectId(voter_id)})
-    except InvalidId:
+    if not is_valid_objectid(voter_id):
         return HTMLResponse("Invalid voter ID", status_code=400)
+
+    result = voters_col.delete_one({"_id": voter_id})
+    if result.deleted_count == 0:
+        return HTMLResponse("Voter not found", status_code=404)
 
     return RedirectResponse(
         f"/ec/dashboard?election_id={election_id}",
@@ -299,6 +313,7 @@ def voter_login_get(request: Request):
 
 @app.post("/voter/login", response_class=HTMLResponse)
 def voter_login_post(request: Request, email: str = Form(...), password: str = Form(...)):
+    # Find voter by email
     voter = voters_col.find_one({"email": email})
 
     if not voter:
@@ -307,16 +322,25 @@ def voter_login_post(request: Request, email: str = Form(...), password: str = F
             {"request": request, "error": "Voter not found"}
         )
 
-    # Verify password
+    # Check password
     if not checkpw(password.encode(), voter["password_hash"].encode()):
         return templates.TemplateResponse(
             "Login.html",
             {"request": request, "error": "Incorrect password"}
         )
 
-    ec = ec_col.find_one({"election_id": voter["election_id"]})
-    election = ec.get("election", {})
+    # Check if voter has already voted
+    if voter.get("has_voted"):
+        return templates.TemplateResponse(
+            "Login.html",
+            {"request": request, "error": "You have already voted."}
+        )
 
+    # Fetch the EC and election info
+    ec = ec_col.find_one({"election_id": voter["election_id"]})
+    election = ec.get("election", {}) if ec else {}
+
+    # Render voting page
     return templates.TemplateResponse(
         "vote.html",
         {
@@ -331,26 +355,40 @@ def voter_login_post(request: Request, email: str = Form(...), password: str = F
 @app.post("/vote", response_class=HTMLResponse)
 def submit_vote(
     request: Request,
-    voter_id: str = Form(...),
-    candidate_id: str = Form(...)
+    voter_id: str = Form(None),
+    candidate_id: str = Form(None)
 ):
-    voter = voters_col.find_one({"_id": ObjectId(voter_id)})
+    # Validate that form fields are present
+    if not voter_id or not candidate_id:
+        return HTMLResponse(
+            "Invalid request: missing voter or candidate information.",
+            status_code=400
+        )
 
-    if not voter or voter.get("has_voted"):
-        return HTMLResponse("Invalid vote", status_code=400)
+    # Fetch voter by UUID string
+    voter = voters_col.find_one({"_id": voter_id})
+    if not voter:
+        return HTMLResponse("Voter not found", status_code=404)
 
+    # Prevent multiple voting
+    if voter.get("has_voted"):
+        return HTMLResponse("You have already voted.", status_code=400)
+
+    # Update voter with vote info
     voters_col.update_one(
-        {"_id": ObjectId(voter_id)},
+        {"_id": voter_id},
         {"$set": {"has_voted": True, "voted_for": candidate_id}}
     )
 
+    # Fetch election info
     ec = ec_col.find_one({"election_id": voter["election_id"]})
+    election = ec.get("election", {}) if ec else {}
 
     return templates.TemplateResponse(
         "thankyou.html",
         {
             "request": request,
-            "election": ec.get("election", {}),
+            "election": election,
             "vote_datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
     )
@@ -385,7 +423,7 @@ def result_page(request: Request, election_id: str):
         }
     )
 
-# ================= dummy oauth =================
+# ================= DUMMY OAUTH =================
 @app.get("/auth/google", name="google_oauth_login")
 def google_oauth_login():
     return HTMLResponse("Google login coming soon!")
