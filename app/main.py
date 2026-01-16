@@ -430,8 +430,24 @@ def result_page(request: Request, election_id: str):
         c["image_url"] = c.get("image_url", "/static/uploads/default.png")
         c["party_symbol_url"] = c.get("party_symbol_url", "/static/uploads/default-symbol.png")
 
-    # Sort candidates by votes descending
+    # Sort candidates by votes (for display only)
     candidates.sort(key=lambda x: x["votes"], reverse=True)
+
+    # ---------------- WINNER / DRAW LOGIC ----------------
+    winner = None
+    is_draw = False
+
+    if total_votes == 0:
+        winner = None
+        is_draw = False
+    else:
+        top_votes = candidates[0]["votes"]
+        top_candidates = [c for c in candidates if c["votes"] == top_votes]
+
+        if len(top_candidates) > 1:
+            is_draw = True
+        else:
+            winner = top_candidates[0]
 
     # Render the results page
     return templates.TemplateResponse(
@@ -440,7 +456,9 @@ def result_page(request: Request, election_id: str):
             "request": request,
             "election": election,
             "candidates": candidates,
-            "total_votes": total_votes
+            "total_votes": total_votes,
+            "winner": winner,
+            "is_draw": is_draw
         }
     )
 

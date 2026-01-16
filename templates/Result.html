@@ -16,48 +16,81 @@
 
   <!-- ================= Results Header ================= -->
   <section class="w-full max-w-4xl bg-white rounded-xl shadow-md p-6 text-center mb-6">
-      <h1 class="text-3xl font-bold text-green-600 mb-2">Election Results</h1>
-      <p class="text-gray-600 mb-1">{{ election.name if election and election.name else "Election" }}</p>
-      <p class="text-gray-500 text-sm mb-2">
-        Results declared on {{ election.result_date if election and election.result_date else "N/A" }}
-      </p>
-    
-      <!-- Total Votes -->
-      <p class="text-gray-700 font-semibold text-lg">
-        Total Votes Cast: {{ total_votes if total_votes is not none else 0 }}
-      </p>
+    <h1 class="text-3xl font-bold text-green-600 mb-2">Election Results</h1>
+
+    <p class="text-gray-600 mb-1">
+      {{ election.name if election and election.name else "Election" }}
+    </p>
+
+    <p class="text-gray-700 font-semibold text-lg mt-2">
+      Total Votes Cast: {{ total_votes if total_votes is not none else 0 }}
+    </p>
+
+    <!-- ================= RESULT STATUS ================= -->
+    {% if is_draw %}
+      <div class="mt-4 text-yellow-600 font-bold text-xl">
+        ⚖️ Result: DRAW
+      </div>
+    {% elif winner %}
+      <div class="mt-4 text-green-600 font-bold text-xl">
+        🏆 Winner: {{ winner.name }} ({{ winner.votes }} votes)
+      </div>
+    {% else %}
+      <div class="mt-4 text-gray-500 font-semibold text-lg">
+        No votes cast
+      </div>
+    {% endif %}
   </section>
 
-  <!-- ================= Candidates Results Section ================= -->
+  <!-- ================= Candidates Results ================= -->
   <section class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6">
 
     {% for candidate in candidates %}
+      {% set is_winner = winner and candidate._id == winner._id %}
+
       <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center
-                  {% if loop.first %} border-4 border-green-400 relative {% else %} border-2 border-gray-300 {% endif %}">
-        
-        {% if loop.first %}
+        {% if is_winner %}
+          border-4 border-green-400 relative
+        {% else %}
+          border-2 border-gray-300
+        {% endif %}
+      ">
+
+        {% if is_winner %}
           <div class="absolute top-0 -mt-6 bg-yellow-400 text-white px-4 py-1 rounded-full font-bold shadow-lg">
             Winner 🏆
           </div>
         {% endif %}
 
         <!-- Candidate Image -->
-        <img src="{{ candidate.image_url if candidate.image_url else '/static/uploads/default.png' }}" 
-             alt="{{ candidate.name }}" 
-             class="{% if loop.first %} w-32 h-32 {% else %} w-24 h-24 {% endif %} rounded-full mb-3">
+        <img
+          src="{{ candidate.image_url if candidate.image_url else '/static/uploads/default.png' }}"
+          alt="{{ candidate.name }}"
+          class="{% if is_winner %} w-32 h-32 {% else %} w-24 h-24 {% endif %} rounded-full mb-3"
+        >
 
-        <!-- Candidate Name & Party -->
-        <h2 class="text-xl font-bold">{{ candidate.name if candidate.name else "Candidate" }}</h2>
-        <p class="text-gray-500 text-sm mb-2">Party: {{ candidate.party_name if candidate.party_name else "Independent" }}</p>
+        <!-- Candidate Name -->
+        <h2 class="text-xl font-bold">
+          {{ candidate.name if candidate.name else "Candidate" }}
+        </h2>
+
+        <p class="text-gray-500 text-sm mb-2">
+          Party: {{ candidate.party_name if candidate.party_name else "Independent" }}
+        </p>
 
         <!-- Party Symbol -->
-        <img src="{{ candidate.party_symbol_url if candidate.party_symbol_url else '/static/uploads/default-symbol.png' }}" 
-             alt="Party Symbol" 
-             class="{% if loop.first %} w-10 h-10 {% else %} w-8 h-8 {% endif %} mb-2">
+        <img
+          src="{{ candidate.party_symbol_url if candidate.party_symbol_url else '/static/uploads/default-symbol.png' }}"
+          alt="Party Symbol"
+          class="{% if is_winner %} w-10 h-10 {% else %} w-8 h-8 {% endif %} mb-2"
+        >
 
-        <!-- Votes & Percentage -->
-        <p class="text-gray-700 font-semibold">Votes: {{ candidate.votes if candidate.votes is not none else 0 }}</p>
-        <p class="{% if loop.first %} text-green-600 {% elif loop.index == 2 %} text-blue-500 {% else %} text-red-500 {% endif %} font-semibold">
+        <!-- Votes -->
+        <p class="text-gray-700 font-semibold">
+          Votes: {{ candidate.votes if candidate.votes is not none else 0 }}
+        </p>
+
+        <p class="font-semibold text-gray-600">
           Percentage: {{ candidate.percentage if candidate.percentage is not none else 0 }}%
         </p>
       </div>
@@ -68,18 +101,18 @@
 </main>
 
 <!-- ================= Confetti Animation ================= -->
+{% if winner and not is_draw %}
 <script>
   const confettiCanvas = document.getElementById('confettiCanvas');
   const myConfetti = confetti.create(confettiCanvas, { resize: true, useWorker: true });
 
-  // Fire confetti
   myConfetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
 
-  // Repeat celebration
   setInterval(() => {
     myConfetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
   }, 2000);
 </script>
+{% endif %}
 
 </body>
 </html>
