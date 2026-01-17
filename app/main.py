@@ -262,20 +262,47 @@ def add_candidate_post(
     moto: str = Form(None),
     profile_pic: UploadFile | None = File(None)
 ):
-    image_path = None
+    """
+    Add a candidate to an election.
+    If no profile image is uploaded, a default image is used.
+    """
+    # Ensure the candidates folder exists
+    candidates_folder = Path("static/uploads/candidates")
+    candidates_folder.mkdir(parents=True, exist_ok=True)
 
+    # Default image relative path (inside static folder)
+    default_image = "uploads/candidates/default.png"
+    image_path = default_image
+
+    # Save uploaded image if exists
     if profile_pic and profile_pic.filename:
         ext = Path(profile_pic.filename).suffix
+        # Ensure valid extension
+        if ext.lower() not in [".jpg", ".jpeg", ".png", ".gif"]:
+            ext = ".gif"  # fallback to gif if invalid
+
         filename = f"{uuid.uuid4()}{ext}"
-        full_path = Path("static/uploads") / filename
+        full_path = candidates_folder / filename
 
         with open(full_path, "wb") as f:
             f.write(profile_pic.file.read())
 
-        image_path = f"uploads/{filename}"
+        # Store relative path in MongoDB
+        image_path = f"uploads/candidates/{filename}"
 
-    add_candidate(election_id, name, party, moto, image_path)
+    # Add candidate to the election
+    success, candidate_id_or_msg = add_candidate(
+        election_id=election_id,
+        name=name,
+        party=party,
+        moto=moto,
+        profile_pic=image_path
+    )
 
+    if not success:
+        return HTMLResponse(f"Failed to add candidate: {candidate_id_or_msg}", status_code=500)
+
+    # Redirect back to EC dashboard
     return RedirectResponse(
         f"/ec/dashboard?election_id={election_id}",
         status_code=303
@@ -340,6 +367,17 @@ def voter_login_post(request: Request, email: str = Form(...), password: str = F
     ec = ec_col.find_one({"election_id": voter["election_id"]})
     election = ec.get("election", {}) if ec else {}
 
+    # ===================== PREPARE CANDIDATE IMAGES =====================
+    candidates = []
+    for candidate in election.get("candidates", []):
+        candidate_copy = candidate.copy()
+
+        # Ensure the candidate profile image is correct
+        # Always use relative path stored in DB, prepend '/static/' for FastAPI
+        candidate_copy["image_url"] = f"/static/{candidate.get('profile_pic') or 'uploads/candidates/default.gif'}"
+
+        candidates.append(candidate_copy)
+
     # Render voting page
     return templates.TemplateResponse(
         "vote.html",
@@ -347,7 +385,7 @@ def voter_login_post(request: Request, email: str = Form(...), password: str = F
             "request": request,
             "voter": voter,
             "election": election,
-            "candidates": election.get("candidates", [])
+            "candidates": candidates
         }
     )
 
@@ -390,15 +428,25 @@ def submit_vote(
     voter["voted_for"] = candidate_id
     voter["vote_token"] = vote_token
 
+    # ===================== PREPARE CANDIDATE IMAGES =====================
+    # Add 'photo_url' for template rendering
+    candidates = []
+    for candidate in election.get("candidates", []):
+        # Ensure default image if none exists
+        candidate_copy = candidate.copy()
+        candidate_copy["photo_url"] = f"/static/{candidate.get('profile_pic') or 'uploads/candidates/default.png'}"
+        candidates.append(candidate_copy)
+
     # Render thankyou page with voter info and token
     return templates.TemplateResponse(
         "thankyou.html",
         {
             "request": request,
-            "voter": voter,  # name + email
+            "voter": voter,              # name + email
             "election": election,
             "vote_datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "vote_token": vote_token
+            "vote_token": vote_token,
+            "candidates": candidates     # include candidates with image URLs
         }
     )
 
@@ -494,5 +542,18 @@ def test_thankyou(request: Request):
             "election": election,
             "vote_datetime": vote_datetime,
             "vote_token": vote_token
+        }
+    )
+
+
+
+# ================= INSTRUCTION PAGE =================
+@app.get("/instructions", response_class=HTMLResponse)
+def instructions_page(request: Request, election_id: str | None = None):
+    return templates.TemplateResponse(
+        "instruction.html",
+        {
+            "request": request,
+            "election_id": election_id
         }
     )

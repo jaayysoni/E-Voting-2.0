@@ -83,8 +83,8 @@
         <p class="mt-2"><strong>Election Name:</strong> {{ election.name }}</p>
         <p><strong>Start:</strong> {{ election.start_date }}</p>
         <p><strong>End:</strong> {{ election.end_date }}</p>
-        {% if election.status == 'Ended' %}
-          <p><strong>Winner:</strong> {{ election.winner }}</p>
+        {% if election.status == 'Ended' and election.winner %}
+          <p><strong>Winner:</strong> {{ election.winner.name }}</p>
         {% endif %}
       </div>
       {% endif %}
@@ -127,7 +127,7 @@
                 {% endif %}
               </td>
               <td class="px-4 py-2 border-b">
-                {% if voter.voted %}
+                {% if voter.has_voted %}
                   <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">Voted</span>
                 {% else %}
                   <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-sm">Not Voted</span>
@@ -176,13 +176,10 @@
             <tr>
               <td class="px-4 py-2 border-b">{{ candidate.name }}</td>
               <td class="px-4 py-2 border-b">{{ candidate.party }}</td>
-              <td class="px-4 py-2 border-b">{{ candidate.moto }}</td>
+              <td class="px-4 py-2 border-b">{{ candidate.moto or '-' }}</td>
               <td class="px-4 py-2 border-b">
-                {% if candidate.profile_pic %}
-                  <img src="/static/{{ candidate.profile_pic }}" alt="Profile" class="h-10 w-10 rounded-full"/>
-                {% else %}
-                  N/A
-                {% endif %}
+                <img src="/static/{{ candidate.profile_pic or 'uploads/candidates/default.png' }}" 
+                     alt="Profile" class="h-10 w-10 rounded-full"/>
               </td>
               <td class="px-4 py-2 border-b">
                 <form method="POST" action="/remove-candidate/{{ candidate._id|string }}">

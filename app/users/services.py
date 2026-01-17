@@ -5,22 +5,23 @@ import uuid
 from db.db import ec_col
 from datetime import datetime
 
+# -------------------- REGISTER EC --------------------
 def register_ec(name: str, email: str, password: str):
     """
     Register a new Election Commissioner (EC) with an embedded election object.
     """
-    # 1️⃣ Check if email already exists
+    # Check if email already exists
     if ec_col.find_one({"email": email}):
         return False, "EC with this email already exists"
 
-    # 2️⃣ Hash password
+    # Hash password
     hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
-    # 3️⃣ Generate unique IDs
+    # Generate unique IDs
     ec_id = str(uuid.uuid4())           # EC document _id
     election_id = str(uuid.uuid4())     # Unique election ID
 
-    # 4️⃣ Create EC document with embedded election
+    # Create EC document with embedded election
     ec_doc = {
         "_id": ec_id,
         "name": name,
@@ -37,13 +38,13 @@ def register_ec(name: str, email: str, password: str):
         }
     }
 
-    # 5️⃣ Insert EC document into DB
+    # Insert EC document into DB
     ec_col.insert_one(ec_doc)
 
-    # 6️⃣ Return success and election_id for EC login/dashboard
     return True, election_id
 
 
+# -------------------- CREATE ELECTION --------------------
 def create_election(election_id: str, name: str, start_date: datetime, end_date: datetime):
     """
     Update the election details for an EC.
@@ -60,17 +61,21 @@ def create_election(election_id: str, name: str, start_date: datetime, end_date:
     return result.modified_count > 0
 
 
+# -------------------- ADD CANDIDATE --------------------
 def add_candidate(election_id: str, name: str, party: str, moto: str = None, profile_pic: str = None):
     """
-    Add a candidate to the EC's election.
+    Add a candidate to the EC's election, including profile picture path.
     """
     candidate_id = str(uuid.uuid4())
+
+    # Store relative path only, default GIF
     candidate = {
         "_id": candidate_id,
         "name": name,
         "party": party,
         "moto": moto,
-        "profile_pic": profile_pic
+        "profile_pic": profile_pic or "uploads/candidates/default.gif",  # default candidate GIF
+        "party_symbol": "uploads/party/party_default.gif"                 # default party GIF
     }
 
     result = ec_col.update_one(
@@ -83,6 +88,7 @@ def add_candidate(election_id: str, name: str, party: str, moto: str = None, pro
     return False, "Failed to add candidate"
 
 
+# -------------------- REMOVE CANDIDATE --------------------
 def remove_candidate(election_id: str, candidate_id: str):
     """
     Remove a candidate from the EC's election.
@@ -94,6 +100,7 @@ def remove_candidate(election_id: str, candidate_id: str):
     return result.modified_count > 0
 
 
+# -------------------- FETCH DASHBOARD --------------------
 def get_ec_dashboard(election_id: str):
     """
     Fetch EC document with embedded election and candidates for dashboard rendering.
@@ -102,17 +109,24 @@ def get_ec_dashboard(election_id: str):
     if not ec:
         return None
 
-    # Fetch voters separately
     from db.db import voters_col
     voters = list(voters_col.find({"election_id": election_id}))
 
     total_voters = len(voters)
     votes_cast = sum(1 for v in voters if v.get("has_voted"))
 
+    # Ensure all candidates have profile_pic and party_symbol
+    candidates = []
+    for c in ec["election"]["candidates"]:
+        candidate_copy = c.copy()
+        candidate_copy["profile_pic"] = f"/static/{c.get('profile_pic') or 'uploads/candidates/default.gif'}"
+        candidate_copy["party_symbol"] = f"/static/{c.get('party_symbol') or 'uploads/party/party_default.gif'}"
+        candidates.append(candidate_copy)
+
     return {
         "ec": ec,
         "voters": voters,
         "total_voters": total_voters,
         "votes_cast": votes_cast,
-        "candidates": ec["election"]["candidates"]
+        "candidates": candidates
     }

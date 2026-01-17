@@ -16,7 +16,7 @@
       <h1 class="text-2xl font-bold text-green-600 mb-2">
         {{ election.name }}
       </h1>
-      <p class="text-gray-600 mb-1">{{ election.description }}</p>
+      <p class="text-gray-600 mb-1">{{ election.description or '-' }}</p>
       <p class="text-gray-500 text-sm">
         Start: {{ election.start_date }} | End: {{ election.end_date }}
       </p>
@@ -26,27 +26,34 @@
     <!-- ================= Candidates Section ================= -->
     <section class="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
 
-      {% for candidate in candidates %}
-      <div class="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-400 flex flex-col items-center">
-        <img src="{{ candidate.photo_url }}" alt="Candidate Picture" class="w-24 h-24 rounded-full mb-3">
-        <h2 class="text-lg font-bold">{{ candidate.name }}</h2>
-        <p class="text-gray-500 text-sm">Party: {{ candidate.party }}</p>
-        <p class="text-gray-500 text-sm">Age: {{ candidate.age }}</p>
-        <img src="{{ candidate.party_symbol }}" alt="Party Symbol" class="w-8 h-8 mt-2">
+      {% if candidates %}
+        {% for candidate in candidates %}
+        <div class="bg-white rounded-xl shadow-md p-4 border-l-4 border-green-400 flex flex-col items-center">
+          <!-- Candidate Image -->
+          <img src="{{ candidate.image_url or '/static/uploads/candidates/default.png' }}" 
+               alt="Candidate Picture" 
+               class="w-24 h-24 rounded-full mb-3 object-cover border border-gray-200">
 
-        <!-- ================= Vote Form ================= -->
-        <form method="POST" action="{{ url_for('submit_vote') }}" class="w-full mt-4">
-          <!-- Hidden inputs for candidate and voter IDs -->
-          <input type="hidden" name="candidate_id" value="{{ candidate._id }}">
-          <input type="hidden" name="voter_id" value="{{ voter._id }}">
-          
-          <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition">
-            Vote
-          </button>
-        </form>
+          <!-- Candidate Info -->
+          <h2 class="text-lg font-bold">{{ candidate.name }}</h2>
+          <p class="text-gray-500 text-sm">Party: {{ candidate.party }}</p>
+          <p class="text-gray-500 text-sm">Moto: {{ candidate.moto or '-' }}</p>
 
-      </div>
-      {% endfor %}
+          <!-- ================= Vote Form ================= -->
+          <form method="POST" action="/vote" class="w-full mt-4">
+            <input type="hidden" name="candidate_id" value="{{ candidate._id }}">
+            <input type="hidden" name="voter_id" value="{{ voter._id }}">
+            
+            <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-2 rounded-lg font-semibold hover:opacity-90 transition">
+              Vote
+            </button>
+          </form>
+
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="col-span-full text-center text-gray-500">No candidates registered for this election yet.</p>
+      {% endif %}
 
     </section>
 

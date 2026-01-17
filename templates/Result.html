@@ -49,12 +49,7 @@
       {% set is_winner = winner and candidate._id == winner._id %}
 
       <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center
-        {% if is_winner %}
-          border-4 border-green-400 relative
-        {% else %}
-          border-2 border-gray-300
-        {% endif %}
-      ">
+        {% if is_winner %} border-4 border-green-400 relative {% else %} border-2 border-gray-300 {% endif %}">
 
         {% if is_winner %}
           <div class="absolute top-0 -mt-6 bg-yellow-400 text-white px-4 py-1 rounded-full font-bold shadow-lg">
@@ -62,37 +57,42 @@
           </div>
         {% endif %}
 
-        <!-- Candidate Image -->
-        <img
-          src="{{ candidate.image_url if candidate.image_url else '/static/uploads/default.png' }}"
-          alt="{{ candidate.name }}"
-          class="{% if is_winner %} w-32 h-32 {% else %} w-24 h-24 {% endif %} rounded-full mb-3"
-        >
+        <!-- Candidate Image (only if exists) -->
+        {% if candidate.image_url %}
+          <img
+            src="{{ candidate.image_url }}"
+            alt="{{ candidate.name }}"
+            class="{% if is_winner %} w-32 h-32 {% else %} w-24 h-24 {% endif %} rounded-full mb-3"
+          >
+        {% endif %}
 
         <!-- Candidate Name -->
-        <h2 class="text-xl font-bold">
+        <h2 class="text-xl font-bold text-center">
           {{ candidate.name if candidate.name else "Candidate" }}
         </h2>
 
-        <p class="text-gray-500 text-sm mb-2">
+        <p class="text-gray-500 text-sm mb-2 text-center">
           Party: {{ candidate.party_name if candidate.party_name else "Independent" }}
         </p>
 
-        <!-- Party Symbol -->
-        <img
-          src="{{ candidate.party_symbol_url if candidate.party_symbol_url else '/static/uploads/default-symbol.png' }}"
-          alt="Party Symbol"
-          class="{% if is_winner %} w-10 h-10 {% else %} w-8 h-8 {% endif %} mb-2"
-        >
+        <!-- Party Symbol (only if exists) -->
+        {% if candidate.party_symbol_url %}
+          <img
+            src="{{ candidate.party_symbol_url }}"
+            alt="Party Symbol"
+            class="{% if is_winner %} w-10 h-10 {% else %} w-8 h-8 {% endif %} mb-2"
+          >
+        {% endif %}
 
         <!-- Votes -->
-        <p class="text-gray-700 font-semibold">
+        <p class="text-gray-700 font-semibold mt-2">
           Votes: {{ candidate.votes if candidate.votes is not none else 0 }}
         </p>
 
         <p class="font-semibold text-gray-600">
           Percentage: {{ candidate.percentage if candidate.percentage is not none else 0 }}%
         </p>
+
       </div>
     {% endfor %}
 
