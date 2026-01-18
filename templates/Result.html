@@ -75,15 +75,6 @@
           Party: {{ candidate.party_name if candidate.party_name else "Independent" }}
         </p>
 
-        <!-- Party Symbol (only if exists) -->
-        {% if candidate.party_symbol_url %}
-          <img
-            src="{{ candidate.party_symbol_url }}"
-            alt="Party Symbol"
-            class="{% if is_winner %} w-10 h-10 {% else %} w-8 h-8 {% endif %} mb-2"
-          >
-        {% endif %}
-
         <!-- Votes -->
         <p class="text-gray-700 font-semibold mt-2">
           Votes: {{ candidate.votes if candidate.votes is not none else 0 }}

@@ -474,9 +474,8 @@ def result_page(request: Request, election_id: str):
 
         # Ensure optional fields exist for template
         c["name"] = c.get("name", "Candidate")
-        c["party_name"] = c.get("party_name", "Independent")
-        c["image_url"] = c.get("image_url", "/static/uploads/default.png")
-        c["party_symbol_url"] = c.get("party_symbol_url", "/static/uploads/default-symbol.png")
+        c["party_name"] = c.get("party", "Independent")
+        c["image_url"] = f"/static/{c.get('profile_pic') or 'uploads/candidates/default.png'}"
 
     # Sort candidates by votes (for display only)
     candidates.sort(key=lambda x: x["votes"], reverse=True)
