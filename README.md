@@ -3,7 +3,6 @@
 [![Python](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.1-green)](https://fastapi.tiangolo.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-brightgreen)](https://www.mongodb.com/cloud/atlas)
-[![Deployed on Render](https://img.shields.io/badge/Render-Deployed-orange)](https://render.com/)
 
 ---
 
@@ -12,6 +11,32 @@
 E-Voting 2.0 is a **secure, scalable, cloud-deployed online voting platform** built with **Python, FastAPI, and MongoDB Atlas**, designed to modernize election management for Election Commissions (ECs) while providing voters a seamless, risk-free voting experience.  
 
 This project demonstrates **advanced backend engineering skills**, including **asynchronous request handling, secure authentication, database modeling, and real-time data processing**, making it a perfect showcase for production-grade system design.
+
+---
+
+## **Screenshots**
+
+| Dashboard | EC Signup |
+|-----------|-----------|
+| <img src="https://github.com/user-attachments/assets/77946883-d032-4e3f-a870-aaf0f5a515e9" alt="Dashboard" width="500"/> | <img src="https://github.com/user-attachments/assets/fa5bb9f2-27a1-4595-b095-34ae9f2388a7" alt="EC Signup" width="500"/> |
+
+| EC Login | EC Dashboard 1 |
+|----------|----------------|
+| <img src="https://github.com/user-attachments/assets/2a9f9431-c7ff-4b0b-a13e-920bc54ab7ea" alt="EC Login" width="500"/> | <img src="https://github.com/user-attachments/assets/cac460b2-9aa8-4c68-b7ab-da1279c07e68" alt="EC Dashboard 1" width="500"/> |
+
+| EC Dashboard 2 | Voter Login |
+|----------------|------------|
+| <img src="https://github.com/user-attachments/assets/8057ab0e-71d0-43ce-acb7-b33a9d65cecb" alt="EC Dashboard 2" width="500"/> | <img src="https://github.com/user-attachments/assets/27efb621-7cf6-4ede-8d3f-5656e4543dbc" alt="Voter Login" width="500"/> |
+
+| Voting Page | Result Page |
+|-------------|------------|
+| <img src="https://github.com/user-attachments/assets/2d4b9c80-4f94-456a-8f59-8ec8e3002597" alt="Voting Page" width="500"/> | <img src="https://github.com/user-attachments/assets/05e39779-63a8-4d4c-bca7-8972e0f89bf2" alt="Result Page" width="500"/> |
+
+| Thank You Page |
+|----------------|
+| <img width="1465" height="834" alt="Screenshot 2026-01-18 at 15 47 59" src="https://github.com/user-attachments/assets/81cd1dde-d9f4-4860-8bf7-ba023d7c5c7b" />| |
+
+---
 
 ### **Key Highlights**
 
@@ -171,9 +196,9 @@ E-voting2.0/
 └── venv/                        # Python virtual environment
 
 ```
+---
 
-
-#Installation & Running Instructions
+## Installation & Running Instructions
 
 Follow these steps to set up and run E-Voting 2.0 locally or on your cloud environment:
 
@@ -212,6 +237,7 @@ uvicorn app.main:app --reload
 ```
 http://localhost:8000
 ```
+
 
 
 
