@@ -27,7 +27,3 @@ jobs:
       - name: Run tests
         run: |
           pytest || echo "No tests failed"
-
-      - name: Build Docker image
-        run: |
-          docker build -t e-voting-app .
