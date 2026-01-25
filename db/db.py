@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from pymongo import MongoClient # type: ignore
+from pymongo import MongoClient  # type: ignore
 
 # Load environment variables from .env
 load_dotenv()
@@ -17,15 +17,22 @@ try:
     # Ping the server to check connection
     client.admin.command('ping')
     print("✅ Connected to MongoDB successfully")
+
+    # Select database
+    db = client["evoting_db"]
+
+    # Collections
+    ec_col = db["ec"]
+    voters_col = db["voters"]
+    votes_col = db["votes"]
+    candidates_col = db["candidates"]
+
 except Exception as e:
     print(f"❌ Could not connect to MongoDB: {e}")
-    raise e
-
-# Select database
-db = client["evoting_db"]
-
-# Collections
-ec_col = db["ec"]
-voters_col = db["voters"]
-votes_col = db["votes"]
-candidates_col = db["candidates"]
+    client = None
+    db = None
+    ec_col = None
+    voters_col = None
+    votes_col = None
+    candidates_col = None
+    print("⚠️ App will still run, but DB operations will fail until MongoDB is available")
