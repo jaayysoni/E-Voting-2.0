@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+
+# Environment files
+.env
+
+# Git files
+.git
+.gitignore
+
+# Dockerfile itself (optional)
+Dockerfile
+
+# Local uploads (use volumes for production)
+static/uploads/
+
+# Tests (optional, not needed in production)
+tests/
+
+# Logs, database files, temporary files
+*.log
+*.sqlite3
