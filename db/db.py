@@ -4,35 +4,44 @@ from dotenv import load_dotenv
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-# Load environment variables from .env
+# Load environment variables
 load_dotenv()
 
 # ----------------------------
-# MongoDB configuration
+# MongoDB configuration (NO HARDCODED SECRETS)
 # ----------------------------
-MONGO_USER = os.getenv("MONGO_USER", "jaayysoni_db_user")
-MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "Jay4801")
-MONGO_CLUSTER = os.getenv("MONGO_CLUSTER", "cluster1.15omtbj.mongodb.net")
+MONGO_USER = os.getenv("MONGO_USER")
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD")
+MONGO_CLUSTER = os.getenv("MONGO_CLUSTER")
 MONGO_DB = os.getenv("MONGO_DB", "evoting_db")
-MONGO_URI = os.getenv("MONGO_URI")  # Optional: full URI from .env
+MONGO_URI = os.getenv("MONGO_URI")  # Optional full URI override
 
-# URL-encode the password to handle special characters safely
+# Validate required environment variables
+if not MONGO_USER or not MONGO_PASSWORD or not MONGO_CLUSTER:
+    raise RuntimeError(
+        "❌ Missing MongoDB environment variables. "
+        "Make sure MONGO_USER, MONGO_PASSWORD, and MONGO_CLUSTER are set in .env"
+    )
+
+# Encode password safely
 MONGO_PASSWORD_ENCODED = quote_plus(MONGO_PASSWORD)
 
-# Construct the connection URI if not provided
+# Build connection string if not provided
 if not MONGO_URI:
-    MONGO_URI = f"mongodb+srv://{MONGO_USER}:{MONGO_PASSWORD_ENCODED}@{MONGO_CLUSTER}/{MONGO_DB}?retryWrites=true&w=majority"
-    print("ℹ️ Using MongoDB Atlas URI constructed from .env variables")
+    MONGO_URI = (
+        f"mongodb+srv://{MONGO_USER}:{MONGO_PASSWORD_ENCODED}"
+        f"@{MONGO_CLUSTER}/{MONGO_DB}?retryWrites=true&w=majority"
+    )
+    print("ℹ️ Using MongoDB Atlas URI from environment variables")
 
 # ----------------------------
 # Connect to MongoDB
 # ----------------------------
 try:
-    client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
-    client.admin.command('ping')  # Test connection
+    client = MongoClient(MONGO_URI, server_api=ServerApi("1"))
+    client.admin.command("ping")
     print("✅ Connected to MongoDB successfully")
 
-    # Select database
     db = client[MONGO_DB]
 
     # Collections
@@ -42,6 +51,6 @@ try:
     candidates_col = db["candidates"]
 
 except Exception as e:
-    print(f"❌ Could not connect to MongoDB: {e}")
+    print(f"❌ MongoDB connection failed: {e}")
     client = db = ec_col = voters_col = votes_col = candidates_col = None
-    print("⚠️ App will still run, but DB operations will fail until MongoDB is available")
+    print("⚠️ App will run, but DB operations will fail")
