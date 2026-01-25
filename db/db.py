@@ -1,25 +1,39 @@
 import os
+from urllib.parse import quote_plus
 from dotenv import load_dotenv
-from pymongo import MongoClient  # type: ignore
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 
 # Load environment variables from .env
 load_dotenv()
 
-# Get MongoDB URI from environment or fallback to default
-MONGO_URI = os.getenv("MONGO_URI")
-if not MONGO_URI:
-    print("⚠️ MONGO_URI not found in .env, using default localhost")
-    MONGO_URI = "mongodb://127.0.0.1:27017"
+# ----------------------------
+# MongoDB configuration
+# ----------------------------
+MONGO_USER = os.getenv("MONGO_USER", "jaayysoni_db_user")
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "Jay4801")
+MONGO_CLUSTER = os.getenv("MONGO_CLUSTER", "cluster1.15omtbj.mongodb.net")
+MONGO_DB = os.getenv("MONGO_DB", "evoting_db")
+MONGO_URI = os.getenv("MONGO_URI")  # Optional: full URI from .env
 
+# URL-encode the password to handle special characters safely
+MONGO_PASSWORD_ENCODED = quote_plus(MONGO_PASSWORD)
+
+# Construct the connection URI if not provided
+if not MONGO_URI:
+    MONGO_URI = f"mongodb+srv://{MONGO_USER}:{MONGO_PASSWORD_ENCODED}@{MONGO_CLUSTER}/{MONGO_DB}?retryWrites=true&w=majority"
+    print("ℹ️ Using MongoDB Atlas URI constructed from .env variables")
+
+# ----------------------------
 # Connect to MongoDB
+# ----------------------------
 try:
-    client = MongoClient(MONGO_URI)
-    # Ping the server to check connection
-    client.admin.command('ping')
+    client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
+    client.admin.command('ping')  # Test connection
     print("✅ Connected to MongoDB successfully")
 
     # Select database
-    db = client["evoting_db"]
+    db = client[MONGO_DB]
 
     # Collections
     ec_col = db["ec"]
@@ -29,10 +43,5 @@ try:
 
 except Exception as e:
     print(f"❌ Could not connect to MongoDB: {e}")
-    client = None
-    db = None
-    ec_col = None
-    voters_col = None
-    votes_col = None
-    candidates_col = None
+    client = db = ec_col = voters_col = votes_col = candidates_col = None
     print("⚠️ App will still run, but DB operations will fail until MongoDB is available")
