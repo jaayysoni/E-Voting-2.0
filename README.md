@@ -1,5 +1,12 @@
-# E-Voting 2.0
+# E-Voting 2.0 
+
 **Production-grade online voting platform** built with **FastAPI & MongoDB Atlas**
+
+## Live Application  
+[![Live on AWS EC2](https://img.shields.io/badge/Live%20on-AWS%20EC2-ff9900?style=for-the-badge&logo=amazonaws&logoColor=white)](https://evoting.jaayysoni.com)
+
+
+https://evoting.jaayysoni.com
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.1-green)](https://fastapi.tiangolo.com/)
@@ -242,6 +249,7 @@ This project is licensed under the **MIT License**.
 You are free to use, modify, and distribute this project for learning or development purposes.
 
 See the [LICENSE](LICENSE) file for details.
+
 
 
 
